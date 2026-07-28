@@ -1,0 +1,216 @@
+{
+  "economy": {
+    "name": "经济基础知识",
+    "chapters": [
+      {
+        "id": "e1",
+        "title": "第一章 市场需求、供给与均衡价格",
+        "questions": [
+          {
+            "id": "e1q1",
+            "type": "single",
+            "stem": "需求是指在一定时间和一定价格条件下，消费者对某种商品或服务（ ）。",
+            "options": ["A 愿意购买的数量", "B 能够购买的数量", "C 愿意而且能够购买的数量", "D 实际需要的物理数量"],
+            "answer": ["C"],
+            "explanation": "需求必须同时具备'愿意'和'能够'两个要素，仅有意愿或仅有购买力都不构成需求。",
+            "difficulty": 1
+          },
+          {
+            "id": "e1q2",
+            "type": "multiple",
+            "stem": "下列各项中，属于影响需求变动的因素有（ ）。",
+            "options": ["A 消费者偏好", "B 生产成本", "C 替代品价格", "D 消费者个人收入", "E 对未来价格的预期"],
+            "answer": ["A", "C", "D", "E"],
+            "explanation": "生产成本影响的是供给而非需求；偏好、相关品价格、收入、预期均影响需求曲线移动。多选题记住'错选整题0分、少选每对一项0.5分'，拿不准就少选。",
+            "difficulty": 2
+          },
+          {
+            "id": "e1q3",
+            "type": "single",
+            "stem": "当某种商品的市场需求大于供给时，市场价格将（ ）。",
+            "options": ["A 趋于上升", "B 趋于下降", "C 保持不变", "D 无法确定"],
+            "answer": ["A"],
+            "explanation": "供不应求时买方竞争推高价格，直至形成新的均衡。",
+            "difficulty": 1
+          },
+          {
+            "id": "e1q4",
+            "type": "single",
+            "stem": "若某商品需求价格弹性系数 Ed > 1，表明该商品（ ）。",
+            "options": ["A 需求缺乏弹性", "B 需求富有弹性", "C 为单位弹性", "D 完全无弹性"],
+            "answer": ["B"],
+            "explanation": "Ed>1 表示需求量变动幅度大于价格变动幅度，即需求富有弹性。",
+            "difficulty": 2
+          },
+          {
+            "id": "e1q5",
+            "type": "multiple",
+            "stem": "关于均衡价格的形成，下列说法正确的有（ ）。",
+            "options": ["A 供过于求时价格下降", "B 供不应求时价格上升", "C 均衡时需求量等于供给量", "D 市场实现'出清'"],
+            "answer": ["A", "B", "C", "D"],
+            "explanation": "均衡价格是供给量与需求量相等时的价格，市场通过该价格自动出清。",
+            "difficulty": 1
+          }
+        ]
+      },
+      {
+        "id": "e2",
+        "title": "第二章 消费者行为分析",
+        "questions": [
+          {
+            "id": "e2q1",
+            "type": "single",
+            "stem": "基数效用论下，消费者实现均衡的条件是（ ）。",
+            "options": ["A MU1/P1 = MU2/P2 = … = λ", "B 总效用 TU 最大即可", "C 收入最大化", "D 边际效用为零"],
+            "answer": ["A"],
+            "explanation": "消费者均衡要求每单位货币带来的边际效用相等，即 MU/P 相等。",
+            "difficulty": 2
+          },
+          {
+            "id": "e2q2",
+            "type": "single",
+            "stem": "边际效用递减规律是指（ ）。",
+            "options": ["A 随消费量增加总效用递减", "B 每增加一单位消费，带来的效用增量递减", "C 效用始终为负", "D 价格越高效用越低"],
+            "answer": ["B"],
+            "explanation": "边际效用是增量的效用，随消费量增加而递减，但总效用一般先增后减。",
+            "difficulty": 1
+          },
+          {
+            "id": "e2q3",
+            "type": "multiple",
+            "stem": "影响消费者需求的主要因素包括（ ）。",
+            "options": ["A 商品价格", "B 消费者偏好", "C 个人可支配收入", "D 生产者数量"],
+            "answer": ["A", "B", "C"],
+            "explanation": "生产者数量影响供给端，不直接影响单个消费者的需求。",
+            "difficulty": 1
+          },
+          {
+            "id": "e2q4",
+            "type": "single",
+            "stem": "无差异曲线上任一点的斜率绝对值表示（ ）。",
+            "options": ["A 边际效用", "B 边际替代率 MRS", "C 价格比", "D 收入效应"],
+            "answer": ["B"],
+            "explanation": "无差异曲线斜率的绝对值为边际替代率，表示消费者愿意用一种商品替代另一种的比率。",
+            "difficulty": 3
+          },
+          {
+            "id": "e2q5",
+            "type": "multiple",
+            "stem": "关于正常品，下列说法正确的有（ ）。",
+            "options": ["A 收入增加需求增加", "B 需求收入弹性大于0", "C 属于低档品", "D 需求收入弹性小于0"],
+            "answer": ["A", "B"],
+            "explanation": "正常品收入增加时需求上升，需求收入弹性为正；低档品（劣等品）则相反。",
+            "difficulty": 2
+          }
+        ]
+      }
+    ]
+  },
+  "business": {
+    "name": "工商管理专业知识和实务",
+    "chapters": [
+      {
+        "id": "b1",
+        "title": "第一章 企业战略与经营决策",
+        "questions": [
+          {
+            "id": "b1q1",
+            "type": "single",
+            "stem": "企业战略最根本的特征是（ ）。",
+            "options": ["A 全局性", "B 风险性", "C 长期性", "D 竞争性"],
+            "answer": ["A"],
+            "explanation": "全局性是企业战略最根本的特征，它统筹企业整体和长远发展。",
+            "difficulty": 1
+          },
+          {
+            "id": "b1q2",
+            "type": "multiple",
+            "stem": "企业战略一般可划分为的层次包括（ ）。",
+            "options": ["A 总体战略", "B 业务单位战略", "C 职能战略", "D 产品战略"],
+            "answer": ["A", "B", "C"],
+            "explanation": "公司层（总体）、业务层、职能层是经典三层次；产品战略属于职能/业务层面的具体内容。",
+            "difficulty": 2
+          },
+          {
+            "id": "b1q3",
+            "type": "single",
+            "stem": "波士顿矩阵中，市场增长率高、相对市场份额低的业务被称为（ ）。",
+            "options": ["A 明星业务", "B 金牛业务", "C 问题业务", "D 瘦狗业务"],
+            "answer": ["C"],
+            "explanation": "问题（问号）业务：高增长、低份额，需大量投入以提升份额。",
+            "difficulty": 1
+          },
+          {
+            "id": "b1q4",
+            "type": "single",
+            "stem": "SWOT 分析中的字母 W 代表（ ）。",
+            "options": ["A 优势 Strengths", "B 劣势 Weaknesses", "C 机会 Opportunities", "D 威胁 Threats"],
+            "answer": ["B"],
+            "explanation": "W=Weaknesses（劣势），与 S 优势相对，属内部因素。",
+            "difficulty": 1
+          },
+          {
+            "id": "b1q5",
+            "type": "multiple",
+            "stem": "企业总体战略的常见类型包括（ ）。",
+            "options": ["A 发展战略", "B 稳定战略", "C 收缩战略", "D 成本领先战略"],
+            "answer": ["A", "B", "C"],
+            "explanation": "发展、稳定、收缩是总体战略的三大方向；成本领先属于竞争（业务）战略。",
+            "difficulty": 2
+          }
+        ]
+      },
+      {
+        "id": "b2",
+        "title": "第八章 财务管理（公式专项）",
+        "questions": [
+          {
+            "id": "b2q1",
+            "type": "single",
+            "stem": "经济订货批量 EOQ = √(2KD/Kc)。若年需求量 D=10000，每次订货成本 K=100，单位年持有成本 Kc=2，则 EOQ≈（ ）。",
+            "options": ["A 100", "B 316", "C 1000", "D 500"],
+            "answer": ["C"],
+            "explanation": "EOQ=√(2×100×10000/2)=√1000000=1000。公式直接套数，不必理解推导。",
+            "difficulty": 2
+          },
+          {
+            "id": "b2q2",
+            "type": "single",
+            "stem": "静态投资回收期是指（ ）。",
+            "options": ["A 项目总寿命期", "B 收回初始投资所需的时间", "C 利润最高的年份", "D 折旧提完的年限"],
+            "answer": ["B"],
+            "explanation": "回收期=初始投资额/年净现金流量（简化后的静态口径）。",
+            "difficulty": 1
+          },
+          {
+            "id": "b2q3",
+            "type": "single",
+            "stem": "某项目初始投资 100 万元，投产后年净现金流 25 万元，则静态投资回收期=（ ）年。",
+            "options": ["A 2", "B 4", "C 5", "D 3"],
+            "answer": ["B"],
+            "explanation": "100/25=4 年。",
+            "difficulty": 1
+          },
+          {
+            "id": "b2q4",
+            "type": "multiple",
+            "stem": "下列属于考虑货币时间价值的动态盈利指标的有（ ）。",
+            "options": ["A 净现值 NPV", "B 内部收益率 IRR", "C 静态投资回收期", "D 资产负债率"],
+            "answer": ["A", "B"],
+            "explanation": "NPV 与 IRR 折现了现金流；静态回收期不考虑时间价值，资产负债率是偿债能力指标。",
+            "difficulty": 2
+          },
+          {
+            "id": "b2q5",
+            "type": "single",
+            "stem": "盈亏平衡产量 Q* = F/(P−V)。若固定成本 F=200000，单价 P=50，单位变动成本 V=30，则 Q*=（ ）。",
+            "options": ["A 10000", "B 4000", "C 6667", "D 5000"],
+            "answer": ["A"],
+            "explanation": "Q*=200000/(50−30)=200000/20=10000 件。",
+            "difficulty": 2
+          }
+        ]
+      }
+    ]
+  }
+}
