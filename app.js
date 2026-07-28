@@ -49,6 +49,14 @@ function findChapter(subject, cid) {
 /* ---------------- 日期 / 计划 ---------------- */
 function localToday() { const d = new Date(); const off = d.getTimezoneOffset(); return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10); }
 function daysBetween(a, b) { return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000); }
+/* 艾宾浩斯记忆曲线间隔（天）：1→2→4→7→15→30，到 30 天后保持该节奏长期复习 */
+const EB_INTERVALS = [1, 2, 4, 7, 15, 30];
+const EB_MAX = EB_INTERVALS.length - 1;
+function addDays(dateStr, n) { const d = new Date(dateStr + 'T00:00:00'); d.setDate(d.getDate() + n); const off = d.getTimezoneOffset(); return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10); }
+function isDue(w) { return !w.due || daysBetween(w.due, localToday()) >= 0; }
+function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+/* 打乱选项顺序（字母随文案一起移动，不影响判分），防止靠位置记忆 */
+function shuffleOpts(q) { if (Array.isArray(q.options)) q.options = shuffleArr(q.options.slice()); return q; }
 function todaysChapters() {
   const days = daysBetween(DATA.plan.startDate, localToday());
   if (days < 0) return { notStarted: true, days };
@@ -71,7 +79,16 @@ function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': 
 function addWrong(item) {
   const ex = state.wrong.find(w => w.qid === item.qid);
   if (ex) { ex.count = (ex.count || 1) + 1; ex.last = localToday(); }
-  else state.wrong.push({ ...item, count: 1, last: localToday() });
+  else state.wrong.push({ ...item, count: 1, last: localToday(), box: 0, due: localToday(), reps: 0 });
+  saveWrong();
+}
+/* 重做判分后更新记忆曲线：答对→进一阶（间隔变长），答错→回到第0阶（近期重练） */
+function gradeWrong(w, correct) {
+  if (correct) { w.box = Math.min((w.box || 0) + 1, EB_MAX); w.reps = (w.reps || 0) + 1; }
+  else { w.box = 0; w.reps = 0; }
+  w.due = addDays(localToday(), EB_INTERVALS[Math.min(w.box, EB_MAX)]);
+  w.last = localToday();
+  if (!correct) w.count = (w.count || 1) + 1;
   saveWrong();
 }
 function removeWrong(qid) { state.wrong = state.wrong.filter(w => w.qid !== qid); saveWrong(); }
@@ -143,7 +160,16 @@ function renderToday() {
   if (t.notStarted) { app.innerHTML = `<div class="card"><h2>还没开始</h2><p class="muted">计划开始日 ${DATA.plan.startDate}，距今天还有 ${-t.days} 天。</p></div>`; return; }
   const left = daysBetween(localToday(), DATA.plan.examDate);
   const banner = `<div class="banner">📅 第 ${t.days + 1} 天 / 距考试 ${left} 天　|　今日目标：经济基础 + 工商管理 各一章</div>`;
-  app.innerHTML = banner + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理');
+  const dueList = state.wrong.filter(isDue);
+  const reviewCard = dueList.length
+    ? `<div class="card review"><span class="pill a">错题复习</span>
+        <p>艾宾浩斯记忆曲线：今日有 <b>${dueList.length}</b> 道错题到复习时间，建议优先清空。</p>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="startWrongDue()">📌 复习待做（${dueList.length}）</button>
+          <a class="btn ghost" href="#/wrong">去错题库</a>
+        </div></div>`
+    : `<div class="card review"><span class="pill g">错题复习</span><p class="muted">今日暂无到期错题，继续保持！错题库共 ${state.wrong.length} 题长期保存中。</p></div>`;
+  app.innerHTML = banner + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + reviewCard;
 }
 function chapterCard(subject, ch, label) {
   if (!ch) return `<div class="card"><span class="pill">${label}</span> <b>本章计划已学完 ✅</b><p class="muted">后续进入强化/模考阶段。</p></div>`;
@@ -217,55 +243,72 @@ function onSubmit(q) {
   explain.innerHTML = `<b>答案：</b>${q.answer.join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
   explain.classList.add('show');
   document.getElementById('submitBtn').style.display = 'none';
-  if (correct) quiz.correct++; else {
-    quiz.wrong++;
-    const item = quiz.queue[quiz.idx];
-    addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, options: q.options, type: q.type, explanation: q.explanation, answer: q.answer.join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
+  const item = quiz.queue[quiz.idx];
+  if (quiz.fromWrong) {
+    const w = state.wrong.find(x => x.qid === q.id);
+    if (w) gradeWrong(w, correct);
+  } else {
+    if (correct) quiz.correct++;
+    else {
+      quiz.wrong++;
+      addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, options: q.options, type: q.type, explanation: q.explanation, answer: q.answer.join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
+    }
   }
-  const item2 = quiz.queue[quiz.idx];
-  markStudy(item2.subject + ':' + item2.chapterId);
+  markStudy(item.subject + ':' + item.chapterId);
   document.getElementById('nav').innerHTML = `<button class="btn" onclick="quizNext()">${quiz.idx + 1 < quiz.queue.length ? '下一题 →' : '查看结果'}</button>`;
 }
 function quizNext() { quiz.idx++; renderQuiz(); }
 window.quizNext = quizNext;
 function renderQuizSummary() {
+  const isWrong = quiz.fromWrong;
   app.innerHTML = `<div class="card"><h2>本轮完成 🎉</h2>
     <div class="stat">
       <div class="box"><b>${quiz.queue.length}</b>总题数</div>
       <div class="box"><b style="color:var(--green-d)">${quiz.correct}</b>答对</div>
-      <div class="box"><b style="color:var(--red)">${quiz.wrong}</b>答错(已入错题库)</div>
+      <div class="box"><b style="color:var(--red)">${quiz.wrong}</b>答错</div>
     </div>
-    <a class="btn" href="#/wrong">去错题库复习</a> <a class="btn ghost" href="#/today">返回今日</a>
+    <p class="muted">${isWrong ? '已按记忆曲线更新每题的复习排程；答错的题已重置到近日重练，全部留在错题库长期保存。' : '答错的题已自动进入错题库，将按记忆曲线提醒你复习。'}</p>
+    <a class="btn" href="#/wrong">${isWrong ? '返回错题库' : '去错题库复习'}</a> <a class="btn ghost" href="#/today">返回今日</a>
   </div>`;
 }
 
 /* ---------------- 视图：错题库 ---------------- */
 function renderWrong() {
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
+  const dueList = state.wrong.filter(isDue);
+  const header = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
+      <button class="btn ghost" onclick="clearWrong()">清空</button></div>
+    <p class="muted">长期保存 · 按艾宾浩斯记忆曲线自动排程。今日待复习 <b style="color:var(--red)">${dueList.length}</b> 题。</p>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="startWrongDue()">📌 复习待做（${dueList.length}）</button>
+      <button class="btn g" onclick="startWrongAll()">🔁 全部重做（${state.wrong.length}）</button>
+    </div></div>`;
   const items = state.wrong.slice().reverse().map(w => {
     const canRedo = Array.isArray(w.options) && w.options.length >= 2;
+    const due = isDue(w);
+    const matured = (w.box || 0) >= EB_MAX;
+    const status = matured ? `已巩固 · 下次 ${w.due || '—'}` : (due ? '⏰ 今日待复习' : `排到 ${w.due || '—'}`);
     return `
     <div class="q">
-      <div class="meta">${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　最近 ${w.last || ''}　|　你的答案：${w.yourWrong || '—'}</div>
+      <div class="meta">${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}</div>
       <div class="stem">${esc(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(w.answer)}</div>
       <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-        ${canRedo ? `<button class="btn" onclick="redoWrong('${w.qid}')">重做（答对才移出）</button>` : ''}
-        <button class="btn ghost" onclick="rmWrong('${w.qid}')">直接移除</button>
+        ${canRedo ? `<button class="btn" onclick="redoWrong('${w.qid}')">重做</button>` : ''}
+        <button class="btn ghost" onclick="rmWrong('${w.qid}')">移除</button>
       </div>
     </div>`;
   }).join('');
-  app.innerHTML = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
-    <button class="btn ghost" onclick="clearWrong()">清空</button></div></div>${items}`;
+  app.innerHTML = header + items;
 }
 window.rmWrong = function (qid) { removeWrong(qid); renderWrong(); };
 window.clearWrong = function () { if (confirm('确定清空全部错题？')) { state.wrong = []; saveWrong(); renderWrong(); } };
 
-/* 错题库重做：重新作答，答对后点「移出」才算掌握 */
+/* 错题库单题重做：重新作答，判分后更新记忆曲线（答对进阶层、答错重置），长期保留 */
 function redoWrong(qid) {
   const w = state.wrong.find(x => x.qid === qid);
   if (!w) { renderWrong(); return; }
-  const q = { id: qid, type: w.type || 'single', stem: w.stem, options: w.options || [], answer: (w.answer || '').split('、').filter(Boolean), explanation: w.explanation || '' };
+  const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: w.options || [], answer: (w.answer || '').split('、').filter(Boolean), explanation: w.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
     <div class="q"><div class="stem">${esc(q.stem)}</div>
     ${q.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}
@@ -299,35 +342,53 @@ function redoWrong(qid) {
     ex.innerHTML = `<b>答案：</b>${q.answer.join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
     ex.classList.add('show');
     document.getElementById('redoSubmit').style.display = 'none';
+    gradeWrong(w, correct);
     const nav = document.getElementById('redoNav');
     if (correct) {
-      nav.innerHTML = `<button class="btn g" onclick="confirmMastery('${qid}')">✓ 答对啦，移出错题库</button> <button class="btn ghost" onclick="renderWrong()">返回</button>`;
+      const matured = (w.box || 0) >= EB_MAX;
+      nav.innerHTML = `<span class="muted">✓ 答对了！已按记忆曲线排到 <b>${w.due}</b> 复习${matured ? '（已巩固）' : ''}。</span> <button class="btn ghost" onclick="renderWrong()">返回错题库</button>`;
     } else {
-      // 答错：答错次数+1，留在错题库
-      w.count = (w.count || 1) + 1; w.last = localToday(); saveWrong();
-      nav.innerHTML = `<span class="muted">答错了，已记录。看解析后返回继续练 →</span> <button class="btn ghost" onclick="renderWrong()">返回错题库</button>`;
+      nav.innerHTML = `<span class="muted">答错了，已重置到近日重练。看解析 →</span> <button class="btn ghost" onclick="renderWrong()">返回错题库</button>`;
     }
   };
 }
 window.redoWrong = redoWrong;
-function confirmMastery(qid) { removeWrong(qid); toast('已掌握，移出错题库 ✅'); renderWrong(); }
-window.confirmMastery = confirmMastery;
+
+/* 批量重做会话：可从「待复习」或「全部」进入；选项/顺序均打乱，判分经 onSubmit→gradeWrong 更新曲线 */
+function startWrongSession(list, title) {
+  const queue = list.filter(w => Array.isArray(w.options) && w.options.length >= 2).map(w => ({
+    q: shuffleOpts({ id: w.qid, type: w.type || 'single', stem: w.stem, options: w.options, answer: (w.answer || '').split('、').filter(Boolean), explanation: w.explanation || '' }),
+    subject: w.subject, chapterId: w.chapterId, chapterTitle: w.chapterTitle
+  }));
+  if (!queue.length) { toast('没有可重做的题目（需含选项）'); renderWrong(); return; }
+  shuffleArr(queue);
+  quiz = { queue, idx: 0, correct: 0, wrong: 0, title, fromWrong: true };
+  renderQuiz();
+}
+function startWrongDue() { startWrongSession(state.wrong.filter(isDue), '错题 · 待复习'); }
+function startWrongAll() { startWrongSession(state.wrong, '错题 · 全部重做'); }
+window.startWrongDue = startWrongDue;
+window.startWrongAll = startWrongAll;
 
 /* ---------------- 视图：进度 ---------------- */
 function renderProgress() {
   const t = todaysChapters();
   const doneCount = Object.keys(state.progress.done || {}).length;
   const left = daysBetween(localToday(), DATA.plan.examDate);
+  const dueCount = state.wrong.filter(isDue).length;
+  const masteredCount = state.wrong.filter(w => (w.box || 0) >= EB_MAX).length;
   app.innerHTML = `<div class="card">
     <h2>学习进度</h2>
     <div class="stat">
       <div class="box"><b>${t.notStarted ? 0 : t.days + 1}</b>已进行天数</div>
       <div class="box"><b>${left}</b>距考试天数</div>
       <div class="box"><b>${doneCount}</b>已完成章节</div>
-      <div class="box"><b style="color:var(--red)">${state.wrong.length}</b>错题库</div>
+      <div class="box"><b style="color:var(--red)">${state.wrong.length}</b>错题库(长期保存)</div>
+      <div class="box"><b style="color:var(--amber-d)">${dueCount}</b>今日待复习</div>
+      <div class="box"><b style="color:var(--green-d)">${masteredCount}</b>已巩固</div>
       <div class="box"><b>${state.progress.streak || 0}</b>连续学习</div>
     </div>
-    <p class="muted">开始日 ${DATA.plan.startDate}　·　考试日 ${DATA.plan.examDate}</p>
+    <p class="muted">开始日 ${DATA.plan.startDate}　·　考试日 ${DATA.plan.examDate}　|　错题库按艾宾浩斯曲线自动排程，答对进阶层、答错重置。</p>
   </div>`;
 }
 
