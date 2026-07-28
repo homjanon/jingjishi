@@ -294,6 +294,11 @@ function renderSettings() {
       <button class="btn g" onclick="ghSave()">立即同步到 GitHub</button>
       <button class="btn ghost" onclick="ghLoad()">从 GitHub 拉取</button>
     </div>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" onclick="exportBackup()">⬇ 导出备份（下载JSON）</button>
+      <label class="btn ghost" style="cursor:pointer;margin:0">⬆ 导入备份<input id="imp" type="file" accept="application/json" style="display:none" onchange="importBackup(this)"></label>
+    </div>
+    <p class="muted" style="margin-top:8px">⚠️ 若你的网络无法访问 api.github.com，GitHub 云同步会失败；请用「导出/导入备份」做本地备份，效果一样且不依赖网络。</p>
     <p class="muted" style="margin-top:10px">上次同步：${last}</p>
     <div class="note">⚠️ 若仓库为「公开」，你的错题数据也会公开可见。需要隐私请：① 仓库设私有 + 升级 GitHub Pro 后用 GitHub Pages；或 ② 改用 Cloudflare Pages（免费支持私有仓库）。</div>
   </div>`;
@@ -309,6 +314,18 @@ window.saveSet = async function () {
 };
 window.ghSave = githubSave;
 window.ghLoad = githubLoad;
+window.exportBackup = function () {
+  const payload = { wrong: state.wrong, progress: state.progress, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'econ-backup-' + localToday() + '.json'; a.click();
+  toast('已导出备份文件');
+};
+window.importBackup = function (input) {
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { const p = JSON.parse(r.result); if (p.wrong) state.wrong = p.wrong; if (p.progress) state.progress = p.progress; saveWrong(); saveProgress(); toast('已导入备份 ✅'); renderWrong(); } catch (e) { toast('导入失败：' + e.message); } };
+  r.readAsText(f);
+};
 
 /* 拦截今日卡片里的刷题按钮 */
 app.addEventListener('click', e => {
