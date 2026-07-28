@@ -625,7 +625,7 @@ function renderAISettings(){
     <input id="aiKey" type="password" placeholder="粘贴对应平台的 Key（Agnes 免费，可留空试）">
     <p class="muted" id="aiKeyHint"></p>
     <label>自定义模型名（可选，留空用默认）</label>
-    <input id="aiModel" placeholder="如 glm-4-flash / Qwen/Qwen3.5-35B-A3B">
+    <input id="aiModel" placeholder="如 glm-4-flash / deepseek-ai/DeepSeek-V4-Flash">
     <p class="muted">Key 获取：智谱 bigmodel.cn ｜ 硅基流动 siliconflow.cn ｜ Agnes apihub.agnes-ai.com</p>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="saveAISet()">保存</button>
