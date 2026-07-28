@@ -46,3 +46,18 @@ input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px
 .empty{color:var(--muted);text-align:center;padding:30px 0;}
 .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;}
 .toast.show{opacity:1;}
+/* —— AI 讲解 —— */
+.ai-card{border:1px dashed var(--blue);border-radius:10px;padding:12px;margin-top:10px;background:#fcfdff;}
+.ai-head{font-weight:700;font-size:14px;color:var(--blue-d);margin-bottom:8px;}
+.ai-badge{font-size:11px;font-weight:600;color:#fff;background:var(--green);border-radius:6px;padding:1px 7px;margin-left:6px;}
+.ai-badge.ok{background:var(--green);}
+.ai-body{font-size:14px;}
+.ai-sec{margin-bottom:8px;}
+.ai-sec b{color:var(--blue-d);}
+.ai-sec .mnem{font-weight:600;color:var(--amber-d);}
+.ai-err{color:var(--red);font-size:13px;}
+.ai-raw{font-size:12px;color:var(--muted);white-space:pre-wrap;max-height:160px;overflow:auto;margin-top:6px;}
+.ai-foot{margin-top:8px;}
+.ai-loading{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px;}
+.spin{width:14px;height:14px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
