@@ -148,6 +148,8 @@ function router() {
   const route = (location.hash || '#/today').replace('#/', '').split('?')[0];
   document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
   if (route === 'wrong') renderWrong();
+  else if (route === 'notes') renderNotes();
+  else if (route === 'plan') renderPlan();
   else if (route === 'progress') renderProgress();
   else if (route === 'settings') renderSettings();
   else renderToday();
@@ -184,6 +186,81 @@ function chapterCard(subject, ch, label) {
     ${note}
     <div style="margin-top:12px">${btn}</div>
   </div>`;
+}
+
+/* ---------------- 视图：笔记 ---------------- */
+function renderNotes() {
+  const subjects = [['economy', '经济基础'], ['business', '工商管理']];
+  let html = `<div class="card"><h2>📒 三色 / 四色笔记</h2>
+    <p class="muted">按教材章节整理：<b style="color:var(--red)">红</b>=必考　<b style="color:var(--amber-d)">黄</b>=易混　<b style="color:var(--blue-d)">蓝</b>=真题出处。点击「去刷题」可做该章真题。</p>
+    <input id="noteSearch" placeholder="搜索章节或笔记关键词…" style="margin-top:10px"></div>`;
+  for (const [sub, label] of subjects) {
+    const order = sub === 'economy' ? DATA.plan.economyOrder : DATA.plan.businessOrder;
+    let cards = '';
+    for (const cid of order) {
+      const note = DATA.notes[cid]; if (!note) continue;
+      const ch = findChapter(sub, cid);
+      const title = ch ? ch.title : cid;
+      const hasQ = ch && ch.questions && ch.questions.length;
+      const btn = hasQ
+        ? `<a class="btn" href="#/quiz" data-sub="${sub}" data-ch="${cid}">去刷题（${ch.questions.length}）</a>`
+        : `<span class="muted">本节无题，仅看笔记</span>`;
+      cards += `<div class="card note-item" data-text="${(title + ' ' + note).replace(/"/g, '')}">
+        <span class="pill ${sub === 'business' ? 'g' : ''}">${label}</span><h3>${esc(title)}</h3>
+        <div class="note">${esc(note)}</div>
+        <div style="margin-top:10px">${btn}</div></div>`;
+    }
+    html += `<div class="note-group">${cards}</div>`;
+  }
+  app.innerHTML = html;
+  const inp = document.getElementById('noteSearch');
+  if (inp) inp.addEventListener('input', () => {
+    const q = inp.value.trim().toLowerCase();
+    app.querySelectorAll('.note-item').forEach(el => {
+      const t = (el.dataset.text || '').toLowerCase();
+      el.style.display = (!q || t.includes(q)) ? '' : 'none';
+    });
+  });
+}
+
+/* ---------------- 视图：计划 ---------------- */
+function renderPlan() {
+  const today = localToday();
+  const left = daysBetween(today, DATA.plan.examDate);
+  let html = `<div class="card"><h2>🗓️ 学习计划</h2>
+    <div class="stat">
+      <div class="box"><b>${DATA.plan.startDate}</b>开始日</div>
+      <div class="box"><b>${DATA.plan.examDate}</b>考试日</div>
+      <div class="box"><b>${left}</b>距考试天数</div>
+    </div>
+    <p class="muted">每科每天 1 章。已完成章节在「进度」里统计；点击任意章节可直接刷题或看笔记。带 ✅ 表示你已做过该章题。</p></div>`;
+  const subjects = [['economy', '经济基础', DATA.plan.economyOrder], ['business', '工商管理', DATA.plan.businessOrder]];
+  for (const [sub, label, order] of subjects) {
+    let rows = '';
+    order.forEach((cid, i) => {
+      const d = addDays(DATA.plan.startDate, i);
+      const ch = findChapter(sub, cid);
+      const title = ch ? ch.title : cid;
+      const done = state.progress.done && state.progress.done[sub + ':' + cid];
+      const diff = daysBetween(d, today);
+      let status, cls;
+      if (done) { status = '已完成'; cls = 'g'; }
+      else if (d === today) { status = '今天'; cls = 'a'; }
+      else if (diff > 0) { status = '待补学'; cls = ''; }
+      else { status = '待开始'; cls = ''; }
+      const hasQ = ch && ch.questions && ch.questions.length;
+      const act = hasQ
+        ? `<a class="btn" href="#/quiz" data-sub="${sub}" data-ch="${cid}">刷题</a>`
+        : `<a class="btn ghost" href="#/notes">看笔记</a>`;
+      rows += `<div class="plan-row">
+        <span class="pdate">${d}</span>
+        <span class="pill ${cls}">${status}</span>
+        <span class="ptitle">${esc(title)}</span>
+        ${act}</div>`;
+    });
+    html += `<div class="card"><span class="pill ${sub === 'business' ? 'g' : ''}">${label}</span><h3>共 ${order.length} 章</h3>${rows}</div>`;
+  }
+  app.innerHTML = html;
 }
 
 /* ---------------- 视图：刷题 ---------------- */
