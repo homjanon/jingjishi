@@ -220,7 +220,7 @@ function onSubmit(q) {
   if (correct) quiz.correct++; else {
     quiz.wrong++;
     const item = quiz.queue[quiz.idx];
-    addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, answer: q.answer.join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
+    addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, options: q.options, type: q.type, explanation: q.explanation, answer: q.answer.join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
   }
   const item2 = quiz.queue[quiz.idx];
   markStudy(item2.subject + ':' + item2.chapterId);
@@ -242,18 +242,76 @@ function renderQuizSummary() {
 /* ---------------- 视图：错题库 ---------------- */
 function renderWrong() {
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
-  const items = state.wrong.slice().reverse().map(w => `
+  const items = state.wrong.slice().reverse().map(w => {
+    const canRedo = Array.isArray(w.options) && w.options.length >= 2;
+    return `
     <div class="q">
       <div class="meta">${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　最近 ${w.last || ''}　|　你的答案：${w.yourWrong || '—'}</div>
       <div class="stem">${esc(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(w.answer)}</div>
-      <div style="margin-top:10px"><button class="btn ghost" onclick="rmWrong('${w.qid}')">移除</button></div>
-    </div>`).join('');
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        ${canRedo ? `<button class="btn" onclick="redoWrong('${w.qid}')">重做（答对才移出）</button>` : ''}
+        <button class="btn ghost" onclick="rmWrong('${w.qid}')">直接移除</button>
+      </div>
+    </div>`;
+  }).join('');
   app.innerHTML = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
     <button class="btn ghost" onclick="clearWrong()">清空</button></div></div>${items}`;
 }
 window.rmWrong = function (qid) { removeWrong(qid); renderWrong(); };
 window.clearWrong = function () { if (confirm('确定清空全部错题？')) { state.wrong = []; saveWrong(); renderWrong(); } };
+
+/* 错题库重做：重新作答，答对后点「移出」才算掌握 */
+function redoWrong(qid) {
+  const w = state.wrong.find(x => x.qid === qid);
+  if (!w) { renderWrong(); return; }
+  const q = { id: qid, type: w.type || 'single', stem: w.stem, options: w.options || [], answer: (w.answer || '').split('、').filter(Boolean), explanation: w.explanation || '' };
+  app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
+    <div class="q"><div class="stem">${esc(q.stem)}</div>
+    ${q.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}
+    <button class="btn g" id="redoSubmit" disabled>提交</button>
+    <div class="explain" id="redoExplain"></div></div>
+    <div id="redoNav" style="margin-top:10px"></div></div>`;
+  let rsel = new Set();
+  const opts = app.querySelectorAll('.opt');
+  opts.forEach(b => b.onclick = () => {
+    if (document.getElementById('redoExplain').classList.contains('show')) return;
+    if (q.type === 'single') {
+      opts.forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); rsel = new Set([+b.dataset.i]);
+      document.getElementById('redoSubmit').disabled = false;
+    } else {
+      b.classList.toggle('sel');
+      if (b.classList.contains('sel')) rsel.add(+b.dataset.i); else rsel.delete(+b.dataset.i);
+      document.getElementById('redoSubmit').disabled = rsel.size === 0;
+    }
+  });
+  document.getElementById('redoSubmit').onclick = () => {
+    const correct = [...rsel].map(i => q.options[i][0]).sort().join('') === q.answer.slice().sort().join('');
+    const ex = document.getElementById('redoExplain');
+    opts.forEach((b, i) => {
+      const letter = q.options[i][0];
+      if (q.answer.includes(letter)) b.classList.add('correct');
+      else if (rsel.has(i)) b.classList.add('wrong');
+      else b.classList.add('dim');
+      b.disabled = true;
+    });
+    ex.innerHTML = `<b>答案：</b>${q.answer.join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
+    ex.classList.add('show');
+    document.getElementById('redoSubmit').style.display = 'none';
+    const nav = document.getElementById('redoNav');
+    if (correct) {
+      nav.innerHTML = `<button class="btn g" onclick="confirmMastery('${qid}')">✓ 答对啦，移出错题库</button> <button class="btn ghost" onclick="renderWrong()">返回</button>`;
+    } else {
+      // 答错：答错次数+1，留在错题库
+      w.count = (w.count || 1) + 1; w.last = localToday(); saveWrong();
+      nav.innerHTML = `<span class="muted">答错了，已记录。看解析后返回继续练 →</span> <button class="btn ghost" onclick="renderWrong()">返回错题库</button>`;
+    }
+  };
+}
+window.redoWrong = redoWrong;
+function confirmMastery(qid) { removeWrong(qid); toast('已掌握，移出错题库 ✅'); renderWrong(); }
+window.confirmMastery = confirmMastery;
 
 /* ---------------- 视图：进度 ---------------- */
 function renderProgress() {
