@@ -212,6 +212,7 @@ function renderQuiz() {
     <div class="q"><div class="stem">${esc(q.stem)}</div>${opts}
       <button class="btn g" id="submitBtn" disabled>提交答案</button>
       <div class="explain" id="explain"></div>
+      <div id="aiBox" style="margin-top:10px"></div>
     </div>
     <div id="nav" style="margin-top:10px"></div>
   </div>`;
@@ -256,6 +257,11 @@ function onSubmit(q) {
   }
   markStudy(item.subject + ':' + item.chapterId);
   document.getElementById('nav').innerHTML = `<button class="btn" onclick="quizNext()">${quiz.idx + 1 < quiz.queue.length ? '下一题 →' : '查看结果'}</button>`;
+  const ab = document.getElementById('aiBox');
+  if (ab) ab.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn ghost" onclick="aiExplainBtn('${q.id}')">🤖 AI 精讲</button>
+      <button class="btn ghost" onclick="aiSimilarBtn('${q.id}')">🎯 举一反三</button>
+    </div><div id="aiResult"></div>`;
 }
 function quizNext() { quiz.idx++; renderQuiz(); }
 window.quizNext = quizNext;
@@ -296,7 +302,10 @@ function renderWrong() {
       <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
         ${canRedo ? `<button class="btn" onclick="redoWrong('${w.qid}')">重做</button>` : ''}
         <button class="btn ghost" onclick="rmWrong('${w.qid}')">移除</button>
+        ${w.yourWrong ? `<button class="btn ghost" onclick="aiDiagnoseBtn('${w.qid}')">🩺 AI 诊断</button>` : ''}
+        <button class="btn ghost" onclick="aiSimilarBtn('${w.qid}')">🎯 举一反三</button>
       </div>
+      <div id="aiResult_${w.qid}"></div>
     </div>`;
   }).join('');
   app.innerHTML = header + items;
@@ -420,7 +429,9 @@ function renderSettings() {
     <p class="muted" style="margin-top:8px">⚠️ 若你的网络无法访问 api.github.com，GitHub 云同步会失败；请用「导出/导入备份」做本地备份，效果一样且不依赖网络。</p>
     <p class="muted" style="margin-top:10px">上次同步：${last}</p>
     <div class="note">⚠️ 若仓库为「公开」，你的错题数据也会公开可见。需要隐私请：① 仓库设私有 + 升级 GitHub Pro 后用 GitHub Pages；或 ② 改用 Cloudflare Pages（免费支持私有仓库）。</div>
-  </div>`;
+  </div>${renderAISettings()}`;
+  const pv = document.getElementById('aiProv');
+  if (pv) { pv.addEventListener('change', loadAIKeyInput); loadAIKeyInput(); }
 }
 window.saveSet = async function () {
   state.settings.token = document.getElementById('tok').value.trim();
@@ -451,6 +462,206 @@ app.addEventListener('click', e => {
   const a = e.target.closest('a[data-sub]');
   if (a) { e.preventDefault(); startQuiz(a.dataset.sub, a.dataset.ch); }
 });
+
+/* ================ AI 讲解（浏览器直连 LLM，镜像 delivery-ocr 模式） ================ */
+window.currentAIQid = null;
+const AI_PRESETS = {
+  zhipu:      { name:"智谱 GLM-4.6V-Flash（直连✅）", baseUrl:"https://open.bigmodel.cn/api/paas/v4/chat/completions", model:"glm-4.6v-flash", key:"zhipu" },
+  siliconflow:{ name:"硅基流动 Qwen3.5-35B-A3B（直连✅）", baseUrl:"https://api.siliconflow.cn/v1/chat/completions", model:"Qwen/Qwen3.5-35B-A3B", key:"siliconflow" },
+  agnes:      { name:"Agnes 2.0-Flash（免费·直连✅）", baseUrl:"https://apihub.agnes-ai.com/v1/chat/completions", model:"agnes-2.0-flash", key:"agnes" },
+};
+const AI_TEACHER_SYS = "你是中级经济师考试（经济基础+工商管理）的辅导老师，擅长用大白话和生活例子讲透考点，并编好记的口诀。面向只想稳过84分的考生，回答通俗、简洁、不啰嗦。";
+function aiStore(p){ return "ej_" + p + "Key"; }
+function aiModelStore(p){ return "ej_model_" + p; }
+function aiGetKey(p){ return localStorage.getItem(aiStore(p)) || ""; }
+function aiGetModel(p){ return localStorage.getItem(aiModelStore(p)) || AI_PRESETS[p].model; }
+function aiCfg(){
+  const p = (state.settings && state.settings.aiProvider && AI_PRESETS[state.settings.aiProvider]) ? state.settings.aiProvider : "zhipu";
+  return { provider:p, baseUrl:AI_PRESETS[p].baseUrl, model:aiGetModel(p), key:aiGetKey(p) };
+}
+function extractJSON(text){
+  if(!text) return null;
+  let s = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if(fence) s = fence[1];
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if(a<0||b<a) return null;
+  s = s.slice(a, b+1);
+  try { return JSON.parse(s); } catch(e){}
+  return repairJSON(s);
+}
+function repairJSON(s){
+  try {
+    let out = s, depth = 0, inStr = false, esc = false;
+    for(const ch of s){ if(esc){esc=false;continue;} if(ch==="\\"){esc=true;continue;} if(ch==='"'){inStr=!inStr;continue;} if(inStr)continue; if(ch==="{")depth++; else if(ch==="}")depth--; }
+    if(inStr) out += '"';
+    while(depth>0){ out += "}"; depth--; }
+    return JSON.parse(out);
+  } catch(e){ return null; }
+}
+async function callLLM(messages, opts){
+  opts = opts || {};
+  const cfg = aiCfg();
+  if(!cfg.key) return { error:"nokey" };
+  const body = { model:cfg.model, messages, temperature:(opts.temperature!=null?opts.temperature:0.6), stream:false };
+  let resp;
+  try { resp = await fetch(cfg.baseUrl, { method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+cfg.key }, body:JSON.stringify(body) }); }
+  catch(e){ return { error:"net", msg:String(e) }; }
+  if(!resp.ok){ let t=""; try{ t = await resp.text(); }catch(_){} return { error:"http", status:resp.status, msg:(t||"").slice(0,300) }; }
+  let j; try{ j = await resp.json(); }catch(e){ return { error:"parse", msg:String(e) }; }
+  const c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+  if(c==null) return { error:"empty", raw:j };
+  if(opts.json){ const p2 = extractJSON(c); if(!p2) return { error:"json", content:c }; return { content:p2 }; }
+  return { content:c };
+}
+function findQById(id){
+  for(const sub of ["economy","business"]){
+    const s = DATA.questions[sub]; if(!s) continue;
+    for(const ch of s.chapters){ if(!ch.questions) continue; const q = ch.questions.find(x=>x.id===id); if(q) return q; }
+  }
+  return null;
+}
+function qCtxOf(q){
+  if(!q) return { stem:"", options:[], answer:[], explanation:"", type:"single" };
+  let ans = q.answer;
+  if(typeof ans === "string") ans = ans.split("、").filter(Boolean);
+  if(!Array.isArray(ans)) ans = [];
+  return { stem:q.stem, options:q.options||[], answer:ans, explanation:q.explanation||"", type:q.type||"single", ai_explain:q.ai_explain||null, mnemonic:q.mnemonic||null, pitfall:q.pitfall||null };
+}
+function aiBoxShell(box, title){
+  box.innerHTML = `<div class="ai-card"><div class="ai-head">${title} <span class="ai-badge" id="aiBadge"></span></div><div class="ai-body" id="aiBody"></div></div>`;
+  return box.querySelector("#aiBody");
+}
+function aiLoading(body){ body.innerHTML = `<div class="ai-loading"><span class="spin"></span> AI 正在思考…</div>`; }
+function aiErr(body, e){
+  const hints = { nokey:"未配置 API Key：去「设置 → AI 讲解」粘贴对应平台的 Key。", net:"网络/CORS 失败：多为 Key 无效或浏览器拦截，请检查 Key。", http:`接口返回 ${e.status}：${e.msg||""}`, parse:"返回内容无法解析。", json:"AI 未按要求返回 JSON，已按原文展示。", empty:"AI 返回为空。" };
+  body.innerHTML = `<div class="ai-err">⚠️ ${hints[e.error]||"调用失败"}</div>` + (e.content?`<div class="ai-raw">${esc(e.content)}</div>`:"");
+}
+function aiExplainBtn(qid, force){
+  const box = document.getElementById("aiResult"); if(!box) return;
+  window.currentAIQid = qid;
+  const ctx = qCtxOf(findQById(qid) || {});
+  const body = aiBoxShell(box, "🤖 AI 精讲（大白话+口诀）");
+  if(!force && (ctx.ai_explain || ctx.mnemonic)){
+    renderExplainResult(body, { explain:ctx.ai_explain, mnemonic:ctx.mnemonic, pitfall:ctx.pitfall }, true);
+    return;
+  }
+  aiLoading(body);
+  const optText = (ctx.options||[]).map(o=>"  "+o).join("\n");
+  const user = `【题目】${ctx.stem}\n【选项】\n${optText}\n【正确答案】${ctx.answer.join("、")}\n【官方解析】${ctx.explanation||"（无）"}\n\n请用 JSON 返回：{"explain":"用大白话+一个生活例子讲透考点（150字内）","mnemonic":"一句好记的口诀或顺口溜","pitfall":"考生最易踩的坑/易混点（80字内）"}。只返回 JSON，不要多余文字。`;
+  callLLM([{role:"system",content:AI_TEACHER_SYS},{role:"user",content:user}], {json:true}).then(r=>{
+    if(r.error){ aiErr(body, r); return; }
+    renderExplainResult(body, r.content, false);
+  });
+}
+function renderExplainResult(body, d, baked){
+  const badge = body.parentElement.querySelector("#aiBadge");
+  if(badge) badge.innerHTML = baked ? `<span class="ai-badge ok">离线缓存</span>` : `<span class="ai-badge ok">已生成</span>`;
+  body.innerHTML = `
+    ${d.explain?`<div class="ai-sec"><b>📘 大白话</b><p>${esc(d.explain)}</p></div>`:""}
+    ${d.mnemonic?`<div class="ai-sec"><b>🔑 记忆口诀</b><p class="mnem">${esc(d.mnemonic)}</p></div>`:""}
+    ${d.pitfall?`<div class="ai-sec"><b>⚠️ 易错提醒</b><p>${esc(d.pitfall)}</p></div>`:""}
+    <div class="ai-foot"><button class="btn ghost" onclick="aiExplainBtn(currentAIQid, true)">🔄 重新生成</button></div>`;
+}
+function aiDiagnoseBtn(qid){
+  const w = state.wrong.find(x=>x.qid===qid); if(!w) return;
+  const box = document.getElementById("aiResult_"+qid); if(!box) return;
+  const body = aiBoxShell(box, "🩺 AI 诊断（你为什么错）");
+  if(!w.yourWrong){ body.innerHTML = `<div class="ai-err">这道题没有记录你的作答，无法诊断。可先点「重做」再诊断。</div>`; return; }
+  aiLoading(body);
+  const optText = (w.options||[]).map(o=>"  "+o).join("\n");
+  const user = `【题目】${w.stem}\n【选项】\n${optText}\n【你选了】${w.yourWrong}（这是错的）\n【正确答案】${w.answer}\n\n请像老师一样，用大白话分三点说明：① 我为什么会选错（常见误区是什么）；② 正确答案为什么对；③ 以后怎么避开这个坑。简洁、直击痛点。`;
+  callLLM([{role:"system",content:AI_TEACHER_SYS},{role:"user",content:user}], {temperature:0.5}).then(r=>{
+    if(r.error){ aiErr(body, r); return; }
+    const badge = body.parentElement.querySelector("#aiBadge");
+    if(badge) badge.innerHTML = `<span class="ai-badge ok">已诊断</span>`;
+    body.innerHTML = `<div class="ai-sec"><p>${esc(r.content)}</p></div><div class="ai-foot"><button class="btn ghost" onclick="aiDiagnoseBtn('${qid}')">🔄 重新诊断</button></div>`;
+  });
+}
+function aiSimilarBtn(qid){
+  const box = document.getElementById("aiResult") || document.getElementById("aiResult_"+qid);
+  if(!box) return;
+  const src = findQById(qid) || (state.wrong.find(x=>x.qid===qid)) || {};
+  const ctx = qCtxOf(src);
+  const body = aiBoxShell(box, "🎯 举一反三（AI 出题）");
+  aiLoading(body);
+  const optText = (ctx.options||[]).map(o=>"  "+o).join("\n");
+  const user = `基于下面这道真题的考点，出一道新的、不重复的同类练习题（题型可同可不同）。\n【原题】${ctx.stem}\n【原选项】${optText}\n【原答案】${ctx.answer.join("、")}\n\n返回 JSON：{"type":"single或multiple","stem":"题干","options":["A ...","B ...","C ...","D ..."],"answer":["A"],"explanation":"简短解析"}。只返回 JSON，选项必须以 A/B/C/D 开头。`;
+  callLLM([{role:"system",content:AI_TEACHER_SYS},{role:"user",content:user}], {json:true}).then(r=>{
+    if(r.error){ aiErr(body, r); return; }
+    const d = r.content;
+    if(!d || !Array.isArray(d.options)){ aiErr(body, {error:"json", content:(typeof d==="string"?d:JSON.stringify(d))}); return; }
+    const badge = body.parentElement.querySelector("#aiBadge");
+    if(badge) badge.innerHTML = `<span class="ai-badge ok">已出题</span>`;
+    renderSimilarQuiz(body, d, qid);
+  });
+}
+function renderSimilarQuiz(body, data, qid){
+  const opts = (data.options||[]).map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join("");
+  body.innerHTML = `<div class="q"><div class="stem">${esc(data.stem)}</div>${opts}<button class="btn g" id="simSubmit" disabled>提交</button><div class="explain" id="simExpl"></div></div>
+    <div class="ai-foot"><button class="btn ghost" onclick="aiSimilarBtn('${qid}')">🔄 换一道</button></div>`;
+  let ssel = new Set();
+  const root = body;
+  root.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    if(root.querySelector("#simExpl").classList.contains("show")) return;
+    if(data.type==="single"){ root.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel")); b.classList.add("sel"); ssel = new Set([+b.dataset.i]); root.querySelector("#simSubmit").disabled = false; }
+    else { b.classList.toggle("sel"); if(b.classList.contains("sel")) ssel.add(+b.dataset.i); else ssel.delete(+b.dataset.i); root.querySelector("#simSubmit").disabled = ssel.size===0; }
+  });
+  root.querySelector("#simSubmit").onclick = ()=>{
+    const correct = [...ssel].map(i=>data.options[i][0]).sort().join("") === data.answer.slice().sort().join("");
+    root.querySelectorAll(".opt").forEach((b,i)=>{ const L = data.options[i][0]; if(data.answer.includes(L)) b.classList.add("correct"); else if(ssel.has(i)) b.classList.add("wrong"); else b.classList.add("dim"); b.disabled = true; });
+    const ex = root.querySelector("#simExpl"); ex.innerHTML = `<b>答案：</b>${data.answer.join("、")}　|　<b>解析：</b>${esc(data.explanation||"")}`; ex.classList.add("show"); root.querySelector("#simSubmit").style.display = "none";
+  };
+}
+function renderAISettings(){
+  const p = aiCfg().provider;
+  const opts = Object.keys(AI_PRESETS).map(k=>`<option value="${k}" ${k===p?"selected":""}>${AI_PRESETS[k].name}</option>`).join("");
+  return `<div class="card">
+    <h2>🤖 AI 讲解（浏览器直连大模型）</h2>
+    <p class="muted">密钥仅存本机浏览器（localStorage），<b>不会</b>随 GitHub 备份上传。支持智谱 / 硅基流动 / Agnes 三家，浏览器直连无需代理。</p>
+    <label>默认模型</label>
+    <select id="aiProv">${opts}</select>
+    <label>API Key（对应上面选中的模型）</label>
+    <input id="aiKey" type="password" placeholder="粘贴对应平台的 Key（Agnes 免费，可留空试）">
+    <p class="muted" id="aiKeyHint"></p>
+    <label>自定义模型名（可选，留空用默认）</label>
+    <input id="aiModel" placeholder="如 glm-4-flash / Qwen/Qwen3.5-35B-A3B">
+    <p class="muted">Key 获取：智谱 bigmodel.cn ｜ 硅基流动 siliconflow.cn ｜ Agnes apihub.agnes-ai.com</p>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" onclick="saveAISet()">保存</button>
+      <button class="btn g" onclick="testAICall()">测试连接</button>
+    </div>
+  </div>`;
+}
+function loadAIKeyInput(){
+  const pv = document.getElementById("aiProv"); if(!pv) return;
+  const p = pv.value;
+  const k = document.getElementById("aiKey"), m = document.getElementById("aiModel"), h = document.getElementById("aiKeyHint");
+  if(k) k.value = aiGetKey(p);
+  if(m) m.value = aiGetModel(p);
+  if(h){ const hint = { zhipu:"智谱 Key 形如 xxxx.xxxxxx", siliconflow:"硅基流动 Key 以 sk- 开头", agnes:"Agnes 免费 Key（apihub 申请），也可留空" }; h.textContent = hint[p] || ""; }
+}
+window.saveAISet = function(){
+  const pv = document.getElementById("aiProv"); if(!pv) return;
+  const p = pv.value;
+  state.settings.aiProvider = p;
+  localStorage.setItem(aiStore(p), (document.getElementById("aiKey").value||"").trim());
+  localStorage.setItem(aiModelStore(p), (document.getElementById("aiModel").value||"").trim());
+  saveSettings();
+  toast("AI 设置已保存（Key 仅存本机）");
+};
+window.testAICall = function(){
+  toast("正在测试连接…");
+  callLLM([{role:"user",content:"回复两个字：可用"}]).then(r=>{
+    if(r.error) toast("测试失败：" + (r.error==="nokey" ? "未填 Key" : r.error));
+    else toast("AI 连接成功 ✅");
+  });
+};
+window.aiExplainBtn = aiExplainBtn;
+window.aiDiagnoseBtn = aiDiagnoseBtn;
+window.aiSimilarBtn = aiSimilarBtn;
+window.loadAIKeyInput = loadAIKeyInput;
+window.findQById = findQById;
 
 /* ---------------- 启动 ---------------- */
 (async function init() {
