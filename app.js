@@ -467,7 +467,7 @@ app.addEventListener('click', e => {
 window.currentAIQid = null;
 const AI_PRESETS = {
   zhipu:      { name:"智谱 GLM-4.6V-Flash（直连✅）", baseUrl:"https://open.bigmodel.cn/api/paas/v4/chat/completions", model:"glm-4.6v-flash", key:"zhipu" },
-  siliconflow:{ name:"硅基流动 Qwen3.5-35B-A3B（直连✅）", baseUrl:"https://api.siliconflow.cn/v1/chat/completions", model:"Qwen/Qwen3.5-35B-A3B", key:"siliconflow" },
+  siliconflow:{ name:"硅基流动 DeepSeek-V4-Flash（直连✅）", baseUrl:"https://api.siliconflow.cn/v1/chat/completions", model:"deepseek-ai/DeepSeek-V4-Flash", key:"siliconflow" },
   agnes:      { name:"Agnes 2.0-Flash（免费·直连✅）", baseUrl:"https://apihub.agnes-ai.com/v1/chat/completions", model:"agnes-2.0-flash", key:"agnes" },
 };
 const AI_TEACHER_SYS = "你是中级经济师考试（经济基础+工商管理）的辅导老师，擅长用大白话和生活例子讲透考点，并编好记的口诀。面向只想稳过84分的考生，回答通俗、简洁、不啰嗦。";
