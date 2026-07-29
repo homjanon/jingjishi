@@ -828,7 +828,7 @@ app.addEventListener('click', e => {
 /* ================ AI 讲解（浏览器直连 LLM，镜像 delivery-ocr 模式） ================ */
 window.currentAIQid = null;
 const AI_PRESETS = {
-  zhipu:      { name: "智谱 GLM-4.6V-Flash（直连✅）", baseUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions", model: "glm-4.6v-flash", key: "zhipu" },
+  qwen35:     { name: "硅基流动 Qwen3.5-35B-A3B（直连✅·轻快）", baseUrl: "https://api.siliconflow.cn/v1/chat/completions", model: "Qwen/Qwen3.5-35B-A3B", key: "siliconflow" },
   siliconflow: { name: "硅基流动 DeepSeek-V4-Flash（直连✅）", baseUrl: "https://api.siliconflow.cn/v1/chat/completions", model: "deepseek-ai/DeepSeek-V4-Flash", key: "siliconflow" },
   agnes:      { name: "Agnes 2.0-Flash（免费·直连✅）", baseUrl: "https://apihub.agnes-ai.com/v1/chat/completions", model: "agnes-2.0-flash", key: "agnes" },
 };
@@ -838,7 +838,7 @@ function aiModelStore(p) { return "ej_model_" + p; }
 function aiGetKey(p) { return localStorage.getItem(aiStore(p)) || ""; }
 function aiGetModel(p) { return localStorage.getItem(aiModelStore(p)) || AI_PRESETS[p].model; }
 function aiCfg() {
-  const p = (state.settings && state.settings.aiProvider && AI_PRESETS[state.settings.aiProvider]) ? state.settings.aiProvider : "zhipu";
+  const p = (state.settings && state.settings.aiProvider && AI_PRESETS[state.settings.aiProvider]) ? state.settings.aiProvider : "qwen35";
   return { provider: p, baseUrl: AI_PRESETS[p].baseUrl, model: aiGetModel(p), key: aiGetKey(p) };
 }
 function extractJSON(text) {
@@ -1004,7 +1004,7 @@ function renderAISettings() {
   const opts = Object.keys(AI_PRESETS).map(k => `<option value="${k}" ${k === p ? "selected" : ""}>${AI_PRESETS[k].name}</option>`).join("");
   return `<div class="card">
     <h2>🤖 AI 讲解（浏览器直连大模型）</h2>
-    <p class="muted">密钥仅存本机浏览器（localStorage），<b>不会</b>随 GitHub 备份上传。支持智谱 / 硅基流动 / Agnes 三家，浏览器直连无需代理。</p>
+    <p class="muted">密钥仅存本机浏览器（localStorage），<b>不会</b>随 GitHub 备份上传。支持 硅基流动 / Agnes 直连，无需代理。</p>
     <label>默认模型</label>
     <select id="aiProv">${opts}</select>
     <label>API Key（对应上面选中的模型）</label>
@@ -1012,7 +1012,7 @@ function renderAISettings() {
     <p class="muted" id="aiKeyHint"></p>
     <label>自定义模型名（可选，留空用默认）</label>
     <input id="aiModel" placeholder="如 glm-4-flash / deepseek-ai/DeepSeek-V4-Flash">
-    <p class="muted">Key 获取：智谱 bigmodel.cn ｜ 硅基流动 siliconflow.cn ｜ Agnes apihub.agnes-ai.com</p>
+    <p class="muted">Key 获取：硅基流动 siliconflow.cn ｜ Agnes apihub.agnes-ai.com</p>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="saveAISet()">保存</button>
       <button class="btn g" onclick="testAICall()">测试连接</button>
@@ -1025,7 +1025,7 @@ function loadAIKeyInput() {
   const k = document.getElementById("aiKey"), m = document.getElementById("aiModel"), h = document.getElementById("aiKeyHint");
   if (k) k.value = aiGetKey(p);
   if (m) m.value = aiGetModel(p);
-  if (h) { const hint = { zhipu: "智谱 Key 形如 xxxx.xxxxxx", siliconflow: "硅基流动 Key 以 sk- 开头", agnes: "Agnes 免费 Key（apihub 申请），也可留空" }; h.textContent = hint[p] || ""; }
+  if (h) { const hint = { qwen35: "硅基流动 Key 以 sk- 开头", siliconflow: "硅基流动 Key 以 sk- 开头", agnes: "Agnes 免费 Key（apihub 申请），也可留空" }; h.textContent = hint[p] || ""; }
 }
 window.saveAISet = function () {
   const pv = document.getElementById("aiProv"); if (!pv) return;
