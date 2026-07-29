@@ -1,72 +1,1729 @@
 {
-  "startDate": "2026-07-28",
-  "examDate": "2026-11-07",
-  "pace": {
-    "economy": 1,
-    "business": 1
+ "startDate": "2026-07-29",
+ "examDate": "2026-11-07",
+ "pace": {
+  "economy": 40,
+  "business": 35
+ },
+ "economyOrder": [
+  "e38",
+  "e39",
+  "e40",
+  "e41",
+  "e42",
+  "e43",
+  "e44",
+  "e45",
+  "e1",
+  "e2",
+  "e3",
+  "e4",
+  "e5",
+  "e6",
+  "e7",
+  "e8",
+  "e9",
+  "e10",
+  "e11",
+  "e12",
+  "e13",
+  "e14",
+  "e15",
+  "e16",
+  "e17",
+  "e18",
+  "e19",
+  "e20",
+  "e21",
+  "e22",
+  "e23",
+  "e24",
+  "e25",
+  "e26",
+  "e27",
+  "e28",
+  "e30",
+  "e31",
+  "e34",
+  "e35",
+  "e36"
+ ],
+ "businessOrder": [
+  "b12",
+  "b13",
+  "b14",
+  "b15",
+  "b16",
+  "b17",
+  "b19",
+  "b20",
+  "b1",
+  "b2",
+  "b3",
+  "b4",
+  "b5",
+  "b6",
+  "b7",
+  "b8",
+  "b9",
+  "b10",
+  "b11"
+ ],
+ "phases": [
+  {
+   "name": "基础通关",
+   "start": "2026-07-29",
+   "end": "2026-09-19",
+   "cap_e": 40,
+   "cap_b": 35,
+   "focus": "基础通关·按章刷真题+看笔记"
   },
-  "economyOrder": [
-    "e38",
-    "e39",
-    "e40",
-    "e41",
-    "e42",
-    "e43",
-    "e44",
-    "e45",
-    "e1",
-    "e2",
-    "e3",
-    "e4",
-    "e5",
-    "e6",
-    "e7",
-    "e8",
-    "e9",
-    "e10",
-    "e11",
-    "e12",
-    "e13",
-    "e14",
-    "e15",
-    "e16",
-    "e17",
-    "e18",
-    "e19",
-    "e20",
-    "e21",
-    "e22",
-    "e23",
-    "e24",
-    "e25",
-    "e26",
-    "e27",
-    "e28",
-    "e30",
-    "e31",
-    "e34",
-    "e35",
-    "e36"
-  ],
-  "businessOrder": [
-    "b12",
-    "b13",
-    "b14",
-    "b15",
-    "b16",
-    "b17",
-    "b19",
-    "b20",
-    "b1",
-    "b2",
-    "b3",
-    "b4",
-    "b5",
-    "b6",
-    "b7",
-    "b8",
-    "b9",
-    "b10",
-    "b11"
-  ]
+  {
+   "name": "强化专项",
+   "start": "2026-09-20",
+   "end": "2026-10-17",
+   "cap_e": 50,
+   "cap_b": 45,
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "name": "冲刺模考",
+   "start": "2026-10-18",
+   "end": "2026-11-07",
+   "cap_e": 0,
+   "cap_b": 0,
+   "focus": "冲刺模考·整套真题限时练"
+  }
+ ],
+ "days": [
+  {
+   "date": "2026-07-29",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 40,
+    "note": "e38"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 35,
+    "note": "e39"
+   },
+   "note": "e38",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-07-30",
+   "economy": {
+    "chapter": "e38",
+    "from": 40,
+    "to": 80,
+    "note": "e40"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 35,
+    "to": 70,
+    "note": "e41"
+   },
+   "note": "e40",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-07-31",
+   "economy": {
+    "chapter": "e38",
+    "from": 80,
+    "to": 87,
+    "note": "e42"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 70,
+    "to": 76,
+    "note": "e43"
+   },
+   "note": "e42",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-01",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 40,
+    "note": "e44"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 35,
+    "note": "e45"
+   },
+   "note": "e44",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-02",
+   "economy": {
+    "chapter": "e39",
+    "from": 40,
+    "to": 80,
+    "note": "e1"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 35,
+    "to": 70,
+    "note": "e2"
+   },
+   "note": "e1",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-03",
+   "economy": {
+    "chapter": "e39",
+    "from": 80,
+    "to": 82,
+    "note": "e3"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 70,
+    "to": 83,
+    "note": "e4"
+   },
+   "note": "e3",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-04",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 40,
+    "note": "e5"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 35,
+    "note": "e6"
+   },
+   "note": "e5",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-05",
+   "economy": {
+    "chapter": "e40",
+    "from": 40,
+    "to": 45,
+    "note": "e7"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 35,
+    "to": 70,
+    "note": "e8"
+   },
+   "note": "e7",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-06",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 40,
+    "note": "e9"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 70,
+    "to": 89,
+    "note": "e10"
+   },
+   "note": "e9",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-07",
+   "economy": {
+    "chapter": "e41",
+    "from": 40,
+    "to": 47,
+    "note": "e11"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 0,
+    "to": 35,
+    "note": "e12"
+   },
+   "note": "e11",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-08",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 40,
+    "note": "e13"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 35,
+    "to": 68,
+    "note": "e14"
+   },
+   "note": "e13",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-09",
+   "economy": {
+    "chapter": "e42",
+    "from": 40,
+    "to": 80,
+    "note": "e15"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 0,
+    "to": 35,
+    "note": "e16"
+   },
+   "note": "e15",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-10",
+   "economy": {
+    "chapter": "e42",
+    "from": 80,
+    "to": 99,
+    "note": "e17"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 35,
+    "to": 55,
+    "note": "e18"
+   },
+   "note": "e17",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-11",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 40,
+    "note": "e19"
+   },
+   "business": {
+    "chapter": "b17",
+    "from": 0,
+    "to": 13,
+    "note": "e20"
+   },
+   "note": "e19",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-12",
+   "economy": {
+    "chapter": "e43",
+    "from": 40,
+    "to": 66,
+    "note": "e21"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 0,
+    "to": 35,
+    "note": "e22"
+   },
+   "note": "e21",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-13",
+   "economy": {
+    "chapter": "e44",
+    "from": 0,
+    "to": 34,
+    "note": "e23"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 35,
+    "to": 70,
+    "note": "e24"
+   },
+   "note": "e23",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-14",
+   "economy": {
+    "chapter": "e45",
+    "from": 0,
+    "to": 40,
+    "note": "e25"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 70,
+    "to": 105,
+    "note": "e26"
+   },
+   "note": "e25",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-15",
+   "economy": {
+    "chapter": "e45",
+    "from": 40,
+    "to": 80,
+    "note": "e27"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 105,
+    "to": 140,
+    "note": "e28"
+   },
+   "note": "e27",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-16",
+   "economy": {
+    "chapter": "e45",
+    "from": 80,
+    "to": 101,
+    "note": "e30"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 140,
+    "to": 175,
+    "note": "e31"
+   },
+   "note": "e30",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-17",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 40,
+    "note": "e34"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 175,
+    "to": 177,
+    "note": "e35"
+   },
+   "note": "e34",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-18",
+   "economy": {
+    "chapter": "e38",
+    "from": 40,
+    "to": 80,
+    "note": "e36"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 0,
+    "to": 35,
+    "note": "b12"
+   },
+   "note": "e36",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-19",
+   "economy": {
+    "chapter": "e38",
+    "from": 80,
+    "to": 87,
+    "note": "b13"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 35,
+    "to": 70,
+    "note": "b14"
+   },
+   "note": "b13",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-20",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 40,
+    "note": "b15"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 70,
+    "to": 91,
+    "note": "b16"
+   },
+   "note": "b15",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-21",
+   "economy": {
+    "chapter": "e39",
+    "from": 40,
+    "to": 80,
+    "note": "b17"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 35,
+    "note": "b19"
+   },
+   "note": "b17",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-22",
+   "economy": {
+    "chapter": "e39",
+    "from": 80,
+    "to": 82,
+    "note": "b20"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 35,
+    "to": 70,
+    "note": "b1"
+   },
+   "note": "b20",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-23",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 40,
+    "note": "b2"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 70,
+    "to": 76,
+    "note": "b3"
+   },
+   "note": "b2",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-24",
+   "economy": {
+    "chapter": "e40",
+    "from": 40,
+    "to": 45,
+    "note": "b4"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 35,
+    "note": "b5"
+   },
+   "note": "b4",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-25",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 40,
+    "note": "b6"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 35,
+    "to": 70,
+    "note": "b7"
+   },
+   "note": "b6",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-26",
+   "economy": {
+    "chapter": "e41",
+    "from": 40,
+    "to": 47,
+    "note": "b8"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 70,
+    "to": 83,
+    "note": "b9"
+   },
+   "note": "b8",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-27",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 40,
+    "note": "b10"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 35,
+    "note": "b11"
+   },
+   "note": "b10",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-28",
+   "economy": {
+    "chapter": "e42",
+    "from": 40,
+    "to": 80,
+    "note": "e38"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 35,
+    "to": 70,
+    "note": "e39"
+   },
+   "note": "e38",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-29",
+   "economy": {
+    "chapter": "e42",
+    "from": 80,
+    "to": 99,
+    "note": "e40"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 70,
+    "to": 89,
+    "note": "e41"
+   },
+   "note": "e40",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-30",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 40,
+    "note": "e42"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 0,
+    "to": 35,
+    "note": "e43"
+   },
+   "note": "e42",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-08-31",
+   "economy": {
+    "chapter": "e43",
+    "from": 40,
+    "to": 66,
+    "note": "e44"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 35,
+    "to": 68,
+    "note": "e45"
+   },
+   "note": "e44",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-01",
+   "economy": {
+    "chapter": "e44",
+    "from": 0,
+    "to": 34,
+    "note": "e1"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 0,
+    "to": 35,
+    "note": "e2"
+   },
+   "note": "e1",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-02",
+   "economy": {
+    "chapter": "e45",
+    "from": 0,
+    "to": 40,
+    "note": "e3"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 35,
+    "to": 55,
+    "note": "e4"
+   },
+   "note": "e3",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-03",
+   "economy": {
+    "chapter": "e45",
+    "from": 40,
+    "to": 80,
+    "note": "e5"
+   },
+   "business": {
+    "chapter": "b17",
+    "from": 0,
+    "to": 13,
+    "note": "e6"
+   },
+   "note": "e5",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-04",
+   "economy": {
+    "chapter": "e45",
+    "from": 80,
+    "to": 101,
+    "note": "e7"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 0,
+    "to": 35,
+    "note": "e8"
+   },
+   "note": "e7",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-05",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 40,
+    "note": "e9"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 35,
+    "to": 70,
+    "note": "e10"
+   },
+   "note": "e9",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-06",
+   "economy": {
+    "chapter": "e38",
+    "from": 40,
+    "to": 80,
+    "note": "e11"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 70,
+    "to": 105,
+    "note": "e12"
+   },
+   "note": "e11",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-07",
+   "economy": {
+    "chapter": "e38",
+    "from": 80,
+    "to": 87,
+    "note": "e13"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 105,
+    "to": 140,
+    "note": "e14"
+   },
+   "note": "e13",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-08",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 40,
+    "note": "e15"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 140,
+    "to": 175,
+    "note": "e16"
+   },
+   "note": "e15",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-09",
+   "economy": {
+    "chapter": "e39",
+    "from": 40,
+    "to": 80,
+    "note": "e17"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 175,
+    "to": 177,
+    "note": "e18"
+   },
+   "note": "e17",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-10",
+   "economy": {
+    "chapter": "e39",
+    "from": 80,
+    "to": 82,
+    "note": "e19"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 0,
+    "to": 35,
+    "note": "e20"
+   },
+   "note": "e19",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-11",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 40,
+    "note": "e21"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 35,
+    "to": 70,
+    "note": "e22"
+   },
+   "note": "e21",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-12",
+   "economy": {
+    "chapter": "e40",
+    "from": 40,
+    "to": 45,
+    "note": "e23"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 70,
+    "to": 91,
+    "note": "e24"
+   },
+   "note": "e23",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-13",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 40,
+    "note": "e25"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 35,
+    "note": "e26"
+   },
+   "note": "e25",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-14",
+   "economy": {
+    "chapter": "e41",
+    "from": 40,
+    "to": 47,
+    "note": "e27"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 35,
+    "to": 70,
+    "note": "e28"
+   },
+   "note": "e27",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-15",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 40,
+    "note": "e30"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 70,
+    "to": 76,
+    "note": "e31"
+   },
+   "note": "e30",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-16",
+   "economy": {
+    "chapter": "e42",
+    "from": 40,
+    "to": 80,
+    "note": "e34"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 35,
+    "note": "e35"
+   },
+   "note": "e34",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-17",
+   "economy": {
+    "chapter": "e42",
+    "from": 80,
+    "to": 99,
+    "note": "e36"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 35,
+    "to": 70,
+    "note": "b12"
+   },
+   "note": "e36",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-18",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 40,
+    "note": "b13"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 70,
+    "to": 83,
+    "note": "b14"
+   },
+   "note": "b13",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-19",
+   "economy": {
+    "chapter": "e43",
+    "from": 40,
+    "to": 66,
+    "note": "b15"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 35,
+    "note": "b16"
+   },
+   "note": "b15",
+   "focus": "基础通关·按章刷真题+看笔记"
+  },
+  {
+   "date": "2026-09-20",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 50,
+    "note": "b17"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 45,
+    "note": "b19"
+   },
+   "note": "b17",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-21",
+   "economy": {
+    "chapter": "e38",
+    "from": 50,
+    "to": 87,
+    "note": "b20"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 45,
+    "to": 76,
+    "note": "b1"
+   },
+   "note": "b20",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-22",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 50,
+    "note": "b2"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 45,
+    "note": "b3"
+   },
+   "note": "b2",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-23",
+   "economy": {
+    "chapter": "e39",
+    "from": 50,
+    "to": 82,
+    "note": "b4"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 45,
+    "to": 83,
+    "note": "b5"
+   },
+   "note": "b4",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-24",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 45,
+    "note": "b6"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 45,
+    "note": "b7"
+   },
+   "note": "b6",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-25",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 47,
+    "note": "b8"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 45,
+    "to": 89,
+    "note": "b9"
+   },
+   "note": "b8",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-26",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 50,
+    "note": "b10"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 0,
+    "to": 45,
+    "note": "b11"
+   },
+   "note": "b10",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-27",
+   "economy": {
+    "chapter": "e42",
+    "from": 50,
+    "to": 99,
+    "note": "e38"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 45,
+    "to": 68,
+    "note": "e39"
+   },
+   "note": "e38",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-28",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 50,
+    "note": "e40"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 0,
+    "to": 45,
+    "note": "e41"
+   },
+   "note": "e40",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-29",
+   "economy": {
+    "chapter": "e43",
+    "from": 50,
+    "to": 66,
+    "note": "e42"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 45,
+    "to": 55,
+    "note": "e43"
+   },
+   "note": "e42",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-09-30",
+   "economy": {
+    "chapter": "e44",
+    "from": 0,
+    "to": 34,
+    "note": "e44"
+   },
+   "business": {
+    "chapter": "b17",
+    "from": 0,
+    "to": 13,
+    "note": "e45"
+   },
+   "note": "e44",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-01",
+   "economy": {
+    "chapter": "e45",
+    "from": 0,
+    "to": 50,
+    "note": "e1"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 0,
+    "to": 45,
+    "note": "e2"
+   },
+   "note": "e1",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-02",
+   "economy": {
+    "chapter": "e45",
+    "from": 50,
+    "to": 100,
+    "note": "e3"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 45,
+    "to": 90,
+    "note": "e4"
+   },
+   "note": "e3",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-03",
+   "economy": {
+    "chapter": "e45",
+    "from": 100,
+    "to": 101,
+    "note": "e5"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 90,
+    "to": 135,
+    "note": "e6"
+   },
+   "note": "e5",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-04",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 50,
+    "note": "e7"
+   },
+   "business": {
+    "chapter": "b19",
+    "from": 135,
+    "to": 177,
+    "note": "e8"
+   },
+   "note": "e7",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-05",
+   "economy": {
+    "chapter": "e38",
+    "from": 50,
+    "to": 87,
+    "note": "e9"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 0,
+    "to": 45,
+    "note": "e10"
+   },
+   "note": "e9",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-06",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 50,
+    "note": "e11"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 45,
+    "to": 90,
+    "note": "e12"
+   },
+   "note": "e11",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-07",
+   "economy": {
+    "chapter": "e39",
+    "from": 50,
+    "to": 82,
+    "note": "e13"
+   },
+   "business": {
+    "chapter": "b20",
+    "from": 90,
+    "to": 91,
+    "note": "e14"
+   },
+   "note": "e13",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-08",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 45,
+    "note": "e15"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 45,
+    "note": "e16"
+   },
+   "note": "e15",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-09",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 47,
+    "note": "e17"
+   },
+   "business": {
+    "chapter": "b12",
+    "from": 45,
+    "to": 76,
+    "note": "e18"
+   },
+   "note": "e17",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-10",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 50,
+    "note": "e19"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 45,
+    "note": "e20"
+   },
+   "note": "e19",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-11",
+   "economy": {
+    "chapter": "e42",
+    "from": 50,
+    "to": 99,
+    "note": "e21"
+   },
+   "business": {
+    "chapter": "b13",
+    "from": 45,
+    "to": 83,
+    "note": "e22"
+   },
+   "note": "e21",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-12",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 50,
+    "note": "e23"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 45,
+    "note": "e24"
+   },
+   "note": "e23",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-13",
+   "economy": {
+    "chapter": "e43",
+    "from": 50,
+    "to": 66,
+    "note": "e25"
+   },
+   "business": {
+    "chapter": "b14",
+    "from": 45,
+    "to": 89,
+    "note": "e26"
+   },
+   "note": "e25",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-14",
+   "economy": {
+    "chapter": "e44",
+    "from": 0,
+    "to": 34,
+    "note": "e27"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 0,
+    "to": 45,
+    "note": "e28"
+   },
+   "note": "e27",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-15",
+   "economy": {
+    "chapter": "e45",
+    "from": 0,
+    "to": 50,
+    "note": "e30"
+   },
+   "business": {
+    "chapter": "b15",
+    "from": 45,
+    "to": 68,
+    "note": "e31"
+   },
+   "note": "e30",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-16",
+   "economy": {
+    "chapter": "e45",
+    "from": 50,
+    "to": 100,
+    "note": "e34"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 0,
+    "to": 45,
+    "note": "e35"
+   },
+   "note": "e34",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-17",
+   "economy": {
+    "chapter": "e45",
+    "from": 100,
+    "to": 101,
+    "note": "e36"
+   },
+   "business": {
+    "chapter": "b16",
+    "from": 45,
+    "to": 55,
+    "note": "b12"
+   },
+   "note": "e36",
+   "focus": "强化专项·薄弱章回刷"
+  },
+  {
+   "date": "2026-10-18",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 87,
+    "note": "b13"
+   },
+   "business": null,
+   "note": "b13",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-19",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 82,
+    "note": "b14"
+   },
+   "business": null,
+   "note": "b14",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-20",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 45,
+    "note": "b15"
+   },
+   "business": null,
+   "note": "b15",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-21",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 47,
+    "note": "b16"
+   },
+   "business": null,
+   "note": "b16",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-22",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 99,
+    "note": "b17"
+   },
+   "business": null,
+   "note": "b17",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-23",
+   "economy": {
+    "chapter": "e43",
+    "from": 0,
+    "to": 66,
+    "note": "b19"
+   },
+   "business": null,
+   "note": "b19",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-24",
+   "economy": {
+    "chapter": "e44",
+    "from": 0,
+    "to": 34,
+    "note": "b20"
+   },
+   "business": null,
+   "note": "b20",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-25",
+   "economy": {
+    "chapter": "e45",
+    "from": 0,
+    "to": 101,
+    "note": "b1"
+   },
+   "business": null,
+   "note": "b1",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-26",
+   "economy": null,
+   "business": {
+    "chapter": "b12",
+    "from": 0,
+    "to": 76,
+    "note": "b2"
+   },
+   "note": "b2",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-27",
+   "economy": null,
+   "business": {
+    "chapter": "b13",
+    "from": 0,
+    "to": 83,
+    "note": "b3"
+   },
+   "note": "b3",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-28",
+   "economy": null,
+   "business": {
+    "chapter": "b14",
+    "from": 0,
+    "to": 89,
+    "note": "b4"
+   },
+   "note": "b4",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-29",
+   "economy": null,
+   "business": {
+    "chapter": "b15",
+    "from": 0,
+    "to": 68,
+    "note": "b5"
+   },
+   "note": "b5",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-30",
+   "economy": null,
+   "business": {
+    "chapter": "b16",
+    "from": 0,
+    "to": 55,
+    "note": "b6"
+   },
+   "note": "b6",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-10-31",
+   "economy": null,
+   "business": {
+    "chapter": "b17",
+    "from": 0,
+    "to": 13,
+    "note": "b7"
+   },
+   "note": "b7",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-01",
+   "economy": null,
+   "business": {
+    "chapter": "b19",
+    "from": 0,
+    "to": 177,
+    "note": "b8"
+   },
+   "note": "b8",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-02",
+   "economy": null,
+   "business": {
+    "chapter": "b20",
+    "from": 0,
+    "to": 91,
+    "note": "b9"
+   },
+   "note": "b9",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-03",
+   "economy": {
+    "chapter": "e38",
+    "from": 0,
+    "to": 87,
+    "note": "b10"
+   },
+   "business": null,
+   "note": "b10",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-04",
+   "economy": {
+    "chapter": "e39",
+    "from": 0,
+    "to": 82,
+    "note": "b11"
+   },
+   "business": null,
+   "note": "b11",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-05",
+   "economy": {
+    "chapter": "e40",
+    "from": 0,
+    "to": 45,
+    "note": "e38"
+   },
+   "business": null,
+   "note": "e38",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-06",
+   "economy": {
+    "chapter": "e41",
+    "from": 0,
+    "to": 47,
+    "note": "e39"
+   },
+   "business": null,
+   "note": "e39",
+   "focus": "冲刺模考·整套真题限时练"
+  },
+  {
+   "date": "2026-11-07",
+   "economy": {
+    "chapter": "e42",
+    "from": 0,
+    "to": 99,
+    "note": "e40"
+   },
+   "business": null,
+   "note": "e40",
+   "focus": "冲刺模考·整套真题限时练"
+  }
+ ]
 }
