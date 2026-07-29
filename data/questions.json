@@ -29987,8 +29987,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "企业联盟模式中，由少数企业组成核心层、众多企业组成外围层，并设共同协调机构的是联邦模式。平行模式各企业平等无核心；星形/垂直模式有单一中心企业。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q5",
@@ -30003,8 +30004,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "企业直接在官网/APP 向个人消费者售票，属于企业与消费者之间的交易，即 B2C（Business to Consumer）电子商务。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q6",
@@ -30019,8 +30021,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "将科层制管理结构改为赋能型管理结构，属于组织结构的变革，因此是管理组织创新。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q7",
@@ -30035,8 +30038,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "商家在网上发布产品信息与行业资讯，起到广而告之的作用，体现电子商务的广告宣传功能。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q8",
@@ -30051,8 +30055,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "服务过程供需双方直接互动、生产与消费同时发生，体现服务的不可分离性（一致性）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q9",
@@ -30083,8 +30088,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "把目标顾客明确为“追求时尚的年轻人”，是按使用者（顾客类型）进行市场定位。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q11",
@@ -30115,8 +30121,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "风险—收益气泡图中，高风险高收益、能带来高额利润的项目称为“珍珠”项目。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q13",
@@ -30147,8 +30154,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "聘请有经验专家匿名多轮函询进行预测，运用的是德尔菲法。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q15",
@@ -30163,13 +30171,14 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "跨国战略同时追求全球一体化与本地响应，协调需求和文化控制需求都很高，多采用矩阵式组织结构。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q16",
       "type": "single",
-      "stem": "将消费品按照消费者购买习惯分类,那么喝的饮料属于（）。\n \n +精准押题，请加微信：FSBG07\n - 10 -",
+      "stem": "将消费品按照消费者购买习惯分类,那么喝的饮料属于（）。\n - 10 -",
       "options": [
        "A．便利品",
        "B．选购品",
@@ -30179,8 +30188,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "饮料是消费者日常频繁购买、单价低、就近购买的消费品，属于便利品。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q17",
@@ -30195,13 +30205,14 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "召开经销商座谈会交流市场信息，属于通过信息沟通激励渠道成员，即沟通激励。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q18",
       "type": "single",
-      "stem": "H 银行将对 M 公司的债权转化为对 M 公司的股票,这一行为会直接导致下列选\n项中（）增加.\n \n +精准押题，请加微信：FSBG07\n - 11 -",
+      "stem": "H 银行将对 M 公司的债权转化为对 M 公司的股票,这一行为会直接导致下列选\n项中（）增加.\n - 11 -",
       "options": [
        "A．H 银行的负债",
        "B．M 公司的负债",
@@ -30211,8 +30222,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "银行将对 M 公司的债权转为股权（债转股），直接增加 M 公司的股本（注册资本）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q19",
@@ -30227,13 +30239,14 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "全球职能结构按职能设部门，不利于产品多样化，也不利于地区间协作，是其缺点。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q20",
       "type": "single",
-      "stem": "股份有限公司董事会每年度至少召开两次会议,每次会议应当于会议召开（）日\n前通知全体董事和监事。。\n \n +精准押题，请加微信：FSBG07\n - 12 -",
+      "stem": "股份有限公司董事会每年度至少召开两次会议,每次会议应当于会议召开（）日\n前通知全体董事和监事。。\n - 12 -",
       "options": [
        "A．20",
        "B．10",
@@ -30243,8 +30256,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "《公司法》规定，股份有限公司董事会每年度至少召开两次会议，每次应于会议召开 10 日前通知全体董事和监事。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q21",
@@ -30259,13 +30273,14 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "按城市用户与农村市场分别设计车型，细分变量是地理变量。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q22",
       "type": "single",
-      "stem": "某生产商的分销渠道市场覆盖面广，市场资透力强，各级渠道成员职责分明，\n但是分销渠道环节多，管理有难度，容易产生窜货和价格混乱问题。该生产\n \n +精准押题，请加微信：FSBG07\n - 13 -\n \n商的分销渠道式是（）。",
+      "stem": "某生产商的分销渠道市场覆盖面广，市场资透力强，各级渠道成员职责分明，\n但是分销渠道环节多，管理有难度，容易产生窜货和价格混乱问题。该生产\n - 13 -\n \n商的分销渠道式是（）。",
       "options": [
        "A．厂家直供模式",
        "B．独家经销模式",
@@ -30275,8 +30290,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "采用多家经销商、覆盖面广渗透力强、但环节多易窜货和价格混乱，是多家经销模式。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q23",
@@ -30291,13 +30307,14 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "将企业层指标按部门、产品层层拆开为小指标作为控制目标，这种制定生产标准的方法是分解法。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q24",
       "type": "single",
-      "stem": "根据《中华人民共和国公司法》，独立董事连续任职不得超过（）年。\n \n +精准押题，请加微信：FSBG07\n - 14 -",
+      "stem": "根据《中华人民共和国公司法》，独立董事连续任职不得超过（）年。\n - 14 -",
       "options": [
        "A．8",
        "B．4",
@@ -30307,8 +30324,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "《公司法》规定，独立董事连续任职不得超过 6 年。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q25",
@@ -30323,15 +30341,16 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "适合成批轮番生产类型企业的生产作业计划编制方法是提前期法。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q26",
       "type": "single",
       "stem": "下列调研方法中不属于网络市场直接调研的是（）。",
       "options": [
-       "A．网上实验\n \n +精准押题，请加微信：FSBG07\n - 15 -",
+       "A．网上实验\n - 15 -",
        "B．访问相关网站",
        "C．网上观察",
        "D．在线问卷"
@@ -30339,8 +30358,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "网络市场直接调研包括网上实验、网上观察、在线问卷；访问相关网站属于间接（二手）调研，不属直接调研。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q27",
@@ -30355,8 +30375,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "市盈率法下企业估值=价格/每股收益，估值高低直接与企业利润相关。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q28",
@@ -30364,15 +30385,16 @@
       "stem": "下列关于国际直接投资生产选址的因素中，属于生产因素的是（",
       "options": [
        "A．最小有效规模",
-       "B．固定成本水平\n \n +精准押题，请加微信：FSBG07\n - 16 -",
+       "B．固定成本水平\n - 16 -",
        "C．产品的价值重量比",
        "D．柔性制造技术"
       ],
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "国际直接投资生产选址的“生产因素”包括产品的价值重量比等；最小有效规模、固定成本属成本因素，柔性制造属技术因素。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q29",
@@ -30387,8 +30409,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "期望报酬率相同时，标准离差越大，说明实际报酬偏离期望的程度越大，投资风险越大。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q30",
@@ -30397,14 +30420,15 @@
       "options": [
        "A．地理位置接近需求",
        "B．研发能力强",
-       "C．地理位置接近原料产地\n \n +精准押题，请加微信：FSBG07\n - 17 -",
+       "C．地理位置接近原料产地\n - 17 -",
        "D．大批量生产"
       ],
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "实施差异化战略要求企业具备较强的研发与产品创新能力，以形成独特卖点。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q31",
@@ -30419,8 +30443,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "网络分销渠道费用率=渠道费用÷渠道销售额=360÷480=75.0%。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q32",
@@ -30429,14 +30454,15 @@
       "options": [
        "A．服务器",
        "B．智能手机",
-       "C．电视机\n \n +精准押题，请加微信：FSBG07\n - 18 -",
+       "C．电视机\n - 18 -",
        "D．台式 PC 机"
       ],
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "移动支付终端是消费者随身携带、可联网完成支付的设备，智能手机符合；服务器/台式机/电视机不是移动终端。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q33",
@@ -30451,8 +30477,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "A-U 过程创新模式中，产品基本稳定、工艺创新取代产品创新的阶段是过渡阶段。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q34",
@@ -30460,15 +30487,16 @@
       "stem": "共计有 300 件部件，该部件的堆码极限为 4 层，单件外形尺寸为\n60cmx50cmx50cm（长 x 宽 x 高）。按堆码极限进行就地堆码，这些部件\n需要占地（）平方米。",
       "options": [
        "A．12",
-       "B．20\n \n +精准押题，请加微信：FSBG07\n - 19 -",
+       "B．20\n - 19 -",
        "C．15.00",
        "D．22.50"
       ],
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "300 件÷堆码 4 层=每层 75 件；单件占地 0.6×0.5=0.3 ㎡；75×0.3=22.5 ㎡。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q35",
@@ -30483,8 +30511,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "目标市场只聚焦青少年这一特定人群（不区分产品），属于市场专业化。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q36",
@@ -30492,15 +30521,16 @@
       "stem": "某企业的一条产品装配流水线每日的有效工作时间为 16 小时,该条流水线节\n拍为 6 分钟则该条流水线每日生产能力是（）台。",
       "options": [
        "A．80",
-       "B．160\n \n +精准押题，请加微信：FSBG07\n - 20 -",
+       "B．160\n - 20 -",
        "C．75",
        "D．90"
       ],
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "流水线每日生产能力=有效工作时间÷节拍=16×60÷6=160 台。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q37",
@@ -30515,8 +30545,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "技术创新的核心是企业家，是一种经济行为，具有高风险和正外部性。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q38",
@@ -30525,14 +30556,15 @@
       "options": [
        "A．250",
        "B．112",
-       "C．350\n \n +精准押题，请加微信：FSBG07\n - 21 -",
+       "C．350\n - 21 -",
        "D．178"
       ],
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "经济订购批量 EOQ=√(2×年需求量×每次订购成本÷年持有成本)=√(2×12500×5÷2)=√62500=250 箱。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q39",
@@ -30547,8 +30579,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "现代企业的核心竞争力以知识、创新为基本内核，具有延展性且难以被复制模仿。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q40",
@@ -30558,13 +30591,14 @@
        "A．20%",
        "B．10%",
        "C．25%",
-       "D．15%\n \n +精准押题，请加微信：FSBG07\n - 22 -"
+       "D．15%\n - 22 -"
       ],
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "《公司法》规定，董事在任职期间每年转让的股份不得超过其所持本公司股份总数的 25%。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q41",
@@ -30579,8 +30613,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "出资人（股东）对投入资本的终极所有权表现为股权。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q42",
@@ -30595,8 +30630,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "对车间操作工人废品率进行考核，废品率属于“考什么”，即绩效考核的内容。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q43",
@@ -30611,8 +30647,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "营业杠杆是企业因存在固定成本而产生的，销量变动引起息税前利润更大幅度变动的效应。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q44",
@@ -30643,8 +30680,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "全资子公司（独资）有利于跨国公司保持对技术的完全控制，避免培养竞争对手。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q46",
@@ -30675,8 +30713,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "绩效考核主要包括工作业绩、工作态度和工作能力三个考核项目。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q48",
@@ -30707,8 +30746,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "对鲜牛奶实施日配（固定时间配送），属于定时配送。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q50",
@@ -30723,13 +30763,14 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "威胁—机会矩阵中，高机会、低威胁的业务是理想业务。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q51",
       "type": "single",
-      "stem": "国家出资公司的党组织担负公司领导人员选拔任用，培养教育和管理监督中的\n \n +精准押题，请加微信：FSBG07\n - 27 -\n \n责任,支持董事会依法选择公司经营管理者、经营管理者依法行使用人权。这\n充分体现了国家出资公司治理的（）原则",
+      "stem": "国家出资公司的党组织担负公司领导人员选拔任用，培养教育和管理监督中的\n - 27 -\n \n责任,支持董事会依法选择公司经营管理者、经营管理者依法行使用人权。这\n充分体现了国家出资公司治理的（）原则",
       "options": [
        "A．党管干部",
        "B．党管人才",
@@ -30739,8 +30780,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "党组织负责领导人员选拔任用、培养教育和管理监督，体现国家出资公司治理的“党管干部”原则。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q52",
@@ -30755,13 +30797,14 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "全球标准化战略下降低成本压力很大，而地区调试压力较小（不变/低）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q53",
       "type": "single",
-      "stem": "企业薪酬制度设计的流程中明进行工作分析的下一步是（）。\n \n +精准押题，请加微信：FSBG07\n - 28 -",
+      "stem": "企业薪酬制度设计的流程中明进行工作分析的下一步是（）。\n - 28 -",
       "options": [
        "A．确现状与需求",
        "B．确定薪酬策略",
@@ -30771,8 +30814,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "薪酬制度设计流程：明确现状与需求→确定薪酬策略→工作分析→进行职位评价→……工作分析的下一步是职位评价。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q54",
@@ -30787,13 +30831,14 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "网络营销将信息发布、收款与售后服务集成一体，体现其整合性。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q55",
       "type": "single",
-      "stem": "某企业以高于同类产品的价格推出新产品，以突出其高质量形象。这种定价法\n是（）\n \n +精准押题，请加微信：FSBG07\n - 29 -",
+      "stem": "某企业以高于同类产品的价格推出新产品，以突出其高质量形象。这种定价法\n是（）\n - 29 -",
       "options": [
        "A．随行就市定价法",
        "B．市场渗透定价法",
@@ -30803,8 +30848,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "以高于同类产品的价格推出新产品以突出高质量形象，是竞争价格定价法（优质优价、差异化定价）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q56",
@@ -30819,13 +30865,14 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "销售额增 2000 万→增销售人员=5×(2000÷1000)=10 人；管理:销售:客服=1:2:2，销售占 2 份=10 人→1 份=5，客服占 2 份=10 人。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q57",
       "type": "single",
-      "stem": "企业生产控制的基础工作是（）。\n \n +精准押题，请加微信：FSBG07\n - 30 -",
+      "stem": "企业生产控制的基础工作是（）。\n - 30 -",
       "options": [
        "A．生产调度",
        "B．在制品控制",
@@ -30835,8 +30882,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "生产控制的基础工作主要包括在制品控制、生产进度控制和库存控制，其中在制品控制是基础。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q58",
@@ -30851,15 +30899,16 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "CFR 贸易术语下，卖方签订运输合同并付运费，保险由买方负责，出口报关由卖方负责。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q59",
       "type": "single",
       "stem": "盈亏平衡分析法的影响因素主要有（）。",
       "options": [
-       "A．产品生产能力、生产总成本和利润\n \n +精准押题，请加微信：FSBG07\n - 31 -",
+       "A．产品生产能力、生产总成本和利润\n - 31 -",
        "B．产品产销量、产品价格和利润",
        "C．产品产销量、生产总成本和利润",
        "D．产品产销量、生产总成本和市场份额"
@@ -30867,8 +30916,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "盈亏平衡分析法的影响因素主要有产品产销量、生产总成本和利润（固定成本、单价、单位变动成本）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q60",
@@ -30891,7 +30941,7 @@
       "type": "multi",
       "stem": "下列关于不同物流包装材料特性的表述，正确的有（）",
       "options": [
-       "A．木质包装易开裂\n \n +精准押题，请加微信：FSBG07\n - 32 -",
+       "A．木质包装易开裂\n - 32 -",
        "B．纸质包装易折，可塑性强、轻便",
        "C．塑料包装有一定强度，且防水防潮",
        "D．玻璃包装透湿性、透气性好但易破碎",
@@ -30902,8 +30952,9 @@
        "B",
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "木质包装易开裂；纸质包装易折、可塑性强、轻便；塑料包装有强度且防水防潮。玻璃透湿透气性差（非好）；金属抗压能力强（非弱）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q62",
@@ -30920,13 +30971,14 @@
        "A",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "领导权力的“请求战略”来源包括奖励权、认同权（参照权）等软性权力。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q63",
       "type": "multi",
-      "stem": "下列知识产权客体中，在《中华人民共和国民法典》和世界贸易组织的《与贸\n \n +精准押题，请加微信：FSBG07\n - 33 -\n \n易有关的知识产权协定》中，均明确列出的有（）。",
+      "stem": "下列知识产权客体中，在《中华人民共和国民法典》和世界贸易组织的《与贸\n - 33 -\n \n易有关的知识产权协定》中，均明确列出的有（）。",
       "options": [
        "A．动物新品种",
        "B．地理标志",
@@ -30938,8 +30990,9 @@
        "B",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "《民法典》与 TRIPS 协定均明确列出的知识产权客体包括地理标志和商标。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q64",
@@ -30978,8 +31031,9 @@
        "C",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "福利的独特优势：减少员工不满意、形式灵活满足不同需要、让员工得到更多实际收入、为员工节省支出；但不像直接薪酬那样直接促使绩效提高。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q66",
@@ -30997,8 +31051,9 @@
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "衡量产品质量的主要因素包括性能、可靠性、耐用性等。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q67",
@@ -31015,8 +31070,9 @@
        "A",
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "项目风险的处理方法主要有调整现金流量法和调整折现率法。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q68",
@@ -31035,8 +31091,9 @@
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "跨国公司应用柔性制造技术，目的包括加强各工序质量控制、提高机器利用率、减少复杂设备停机、为不同市场定制生产（非追求大规模同质生产）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q69",
@@ -31054,8 +31111,9 @@
        "C",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "企业内部人力资源信息包括企业发展战略、人力资源现状、经营计划等；行业形势、市场竞争属外部信息。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q70",
@@ -31066,15 +31124,16 @@
        "B．不易受到东道国法律政策的限制和当地舆论的抵制",
        "C．可以减少市场上的竞争对手",
        "D．通常会享受东道国的优惠政策",
-       "E．在多数国家创建海外企业比并购海外企业的手续简单\n \n +精准押题，请加微信：FSBG07\n - 37 -"
+       "E．在多数国家创建海外企业比并购海外企业的手续简单\n - 37 -"
       ],
       "answer": [
        "B",
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "与跨国并购相比，绿地投资不易受东道国法律限制和舆论抵制、通常享优惠政策、在多数国家创建手续比并购简单。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q71",
@@ -31093,8 +31152,9 @@
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "《公司法》规定，董事、高级管理人员（含董事长、总经理、董事会秘书等）不得兼任监事；职工代表监事可以。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q72",
@@ -31105,7 +31165,7 @@
        "B．决定公司内部管理机构的人员设置",
        "C．审议批准公司的利润分配方案",
        "D．选举更换董事,监事",
-       "E．修改公司章程\n \n +精准押题，请加微信：FSBG07\n - 38 -"
+       "E．修改公司章程\n - 38 -"
       ],
       "answer": [
        "A",
@@ -31113,8 +31173,9 @@
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "股东会职权包括对公司发行债券作决议、审议批准利润分配方案、选举更换董事监事、修改公司章程；决定内部管理机构设置属董事会职权。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q73",
@@ -31133,8 +31194,9 @@
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "适合网上销售的产品通常具有标准化、重购性、廉价性、时尚性等特点；大型化不利于网购物流。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q74",
@@ -31145,15 +31207,16 @@
        "B．行业有非常多实力相当的生产厂商",
        "C．产品无差异,生产厂商能够方便转移成本",
        "D．生产厂商有能力实施前向一体化",
-       "E．生产厂商的产品在市场上没有替代品\n \n +精准押题，请加微信：FSBG07\n - 39 -"
+       "E．生产厂商的产品在市场上没有替代品\n - 39 -"
       ],
       "answer": [
        "A",
        "D",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "当厂商产品对购买者十分重要、能实施前向一体化、市场上无替代品时，厂商处于渠道控制地位。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q75",
@@ -31171,8 +31234,9 @@
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "物体处理服务是对实物进行处理的服务，如快递、维修、保管；电影属信息娱乐、美容属人体处理。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q76",
@@ -31182,15 +31246,16 @@
        "A．电子音乐",
        "B．计算机软件",
        "C．自行车",
-       "D．电视机\n \n +精准押题，请加微信：FSBG07\n - 40 -",
+       "D．电视机\n - 40 -",
        "E．信息咨询"
       ],
       "answer": [
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "完全电子商务指交易与交付全在线完成；自行车、电视机是实体大件，不适合完全电子商务。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q77",
@@ -31207,8 +31272,9 @@
        "C",
        "E"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "单件小批生产企业适用的期量标准包括生产提前期、生产周期；在制品定额、节拍适用于大批大量生产。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q78",
@@ -31217,7 +31283,7 @@
       "options": [
        "A．母国的国外子公司可以将习得的技能转移回母国",
        "B．可以增加母国部分商品和服务的进口，改善母国国际收支",
-       "C．当东道国子公司形成对母国的进口需求时，将增加母国就业\n \n +精准押题，请加微信：FSBG07\n - 41 -",
+       "C．当东道国子公司形成对母国的进口需求时，将增加母国就业\n - 41 -",
        "D．母国的国际收支因国外子公司的收益回流而得到改善",
        "E．会提高母国国内市场的竞争水平，带来母国劳动生产率的 提高"
       ],
@@ -31226,8 +31292,9 @@
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "国际直接投资对母国的收益：子公司习得的技能转移回母国、收益回流改善国际收支、形成进口需求增加母国就业。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q79",
@@ -31244,8 +31311,9 @@
        "A",
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "债权人将债权转为股权后，可通过 E 公司上市、股权转让收回投资。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q80",
@@ -31274,14 +31342,15 @@
       "options": [
        "A．4",
        "B．12",
-       "C．5\n \n +精准押题，请加微信：FSBG07\n - 43 -",
+       "C．5\n - 43 -",
        "D．11"
       ],
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "产品组合长度指所有产品项目的总数；本题答案为 12，即该企业共有 12 个产品项目。（案例题，具体数依据案例背景）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q82",
@@ -31296,8 +31365,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "在原有产品组合中新增果汁饮料，属于扩大产品组合策略。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q83",
@@ -31312,8 +31382,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "目标利润定价法：单位价格=(总成本+目标利润)÷预计销量；本题目标价格为 3.5 元/瓶。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q84",
@@ -31328,8 +31399,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "该果汁饮料采用的促销策略是公共关系。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q85",
@@ -31344,8 +31416,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "将原有 M 品牌冠用于新果汁饮料，属于品牌延伸策略。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q86",
@@ -31360,8 +31433,9 @@
       "answer": [
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "假定产品（代表产品）台时定额=Σ(各产品台时×产量比重)；本题假定产品台时定额为 4.50 小时。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q87",
@@ -31371,13 +31445,14 @@
        "A．7628",
        "B．8250",
        "C．7857",
-       "D．7950\n \n +精准押题，请加微信：FSBG07\n - 46 -"
+       "D．7950\n - 46 -"
       ],
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "车床组年生产能力=单位设备年有效台时÷单位产品台时；本题甲零件年能力为 7857 件。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q88",
@@ -31390,8 +31465,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "企业生产组织层级从底层到高层依次为：设备组→工段→车间→厂部。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q89",
@@ -31407,13 +31483,14 @@
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "提高车床组生产能力的措施：增加有效工作时间、增加车床数量（提高精度、增重无直接关系）。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q90",
       "type": "multi",
-      "stem": "5该车床组以假定产品法进行生产能力核算，表明这四种\n \n +精准押题，请加微信：FSBG07\n - 47 -\n \n零件的生产特点为（）。",
+      "stem": "5该车床组以假定产品法进行生产能力核算，表明这四种\n - 47 -\n \n零件的生产特点为（）。",
       "options": [
        "A．各种零件结构差别大",
        "B．各种零件劳动量差别大",
@@ -31425,8 +31502,9 @@
        "B",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "采用假定产品法核算生产能力，表明各零件在结构、工艺、劳动量上差别都较大。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q91",
@@ -31442,8 +31520,9 @@
        "A",
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "外部战略环境分析可选 PESTEL 分析法、EFE 矩阵；7S、波士顿矩阵非外部专用于此。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q92",
@@ -31475,8 +31554,9 @@
        "A",
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "成本领先战略途径：使用先进生产设备提高效率、整合资源提高价值链整体效益。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q94",
@@ -31493,15 +31573,16 @@
        "B",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "新产品经营定量决策方法包括期望损益决策法、决策树分析法、量本利分析法；哥顿法属定性。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q95",
       "type": "single",
       "stem": "5若该公司采用后悔值原则进行蓝牙耳机的产品备选产品\n是（）",
       "options": [
-       "A．甲\n \n +精准押题，请加微信：FSBG07\n - 50 -",
+       "A．甲\n - 50 -",
        "B．乙",
        "C．丙",
        "D．丁"
@@ -31509,15 +31590,16 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "后悔值原则（最小最大后悔值）下，本题应选甲产品。（案例题，依案例后悔值表）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q96",
       "type": "single",
       "stem": "1该公司 A 项目报酬率的标准离差率为（）",
       "options": [
-       "A．20%\n \n +精准押题，请加微信：FSBG07\n - 51 -",
+       "A．20%\n - 51 -",
        "B．25%",
        "C．40%",
        "D．35%"
@@ -31525,8 +31607,9 @@
       "answer": [
        "C"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "标准离差率=标准离差÷期望报酬率；本题 A 项目标准离差率为 40%。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q97",
@@ -31541,8 +31624,9 @@
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "风险报酬率=标准离差率×风险报酬系数，二者成正比关系。",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q98",
@@ -31551,14 +31635,15 @@
       "options": [
        "A．4.1",
        "B．3.5",
-       "C．2.5\n \n +精准押题，请加微信：FSBG07\n - 52 -",
+       "C．2.5\n - 52 -",
        "D．2.2"
       ],
       "answer": [
        "B"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "静态投资回收期=累计净现金流量首次为正的年份−1+上年未收回额÷当年净流量；本题为 3.5 年。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q99",
@@ -31573,8 +31658,9 @@
       "answer": [
        "A"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "净现值 NPV=Σ(各年净流量×复利现值系数)−初始投资；本题 A 项目净现值为 999.7。（案例题，依案例数据）",
+      "difficulty": 2,
+      "ai_filled": true
      },
      {
       "id": "b22q100",
@@ -31590,8 +31676,9 @@
        "C",
        "D"
       ],
-      "explanation": "",
-      "difficulty": 2
+      "explanation": "净现值法的优点：考虑了资金时间价值，能反映投资方案的净收益；但不反映真实报酬率、不利比较初始投资不同的方案。",
+      "difficulty": 2,
+      "ai_filled": true
      }
     ]
    }
