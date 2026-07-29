@@ -234,11 +234,11 @@ async function githubLoad() {
     if (!r.ok) { toast('拉取失败：' + r.status); return; }
     const j = await r.json();
     const payload = JSON.parse(b64decode(j.content));
-    if (payload.wrong) state.wrong = payload.wrong;
-    if (payload.progress) state.progress = payload.progress;
-    if (payload.corrections) state.corrections = payload.corrections;
+    state.wrong = mergeWrong(payload.wrong, state.wrong);
+    state.progress = mergeProgress(payload.progress, state.progress);
+    state.corrections = mergeCorrections(payload.corrections, state.corrections);
     await saveWrong(); await saveProgress(); await saveCorrections();
-    toast('已从 GitHub 拉取 ✅'); router();
+    toast('已从 GitHub 拉取并合并 ✅（不会覆盖本机新数据）'); router();
   } catch (e) { toast('拉取失败：' + e.message); }
 }
 function scheduleSync() {
