@@ -38,11 +38,14 @@ async function saveSession() { await dbSet('session', state.session); }
 
 /* ---------------- 数据加载 ---------------- */
 async function loadData() {
+  // 版本号破坏缓存：data/*.json 带 ?v，确保部署后浏览器拉到最新 app.js/plan.json/questions.json
+  const v = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+  const qs = v ? ('?v=' + v) : '';
   const [q, p, n, pat] = await Promise.all([
-    fetch('data/questions.json').then(r => r.json()),
-    fetch('data/plan.json').then(r => r.json()),
-    fetch('data/notes.json').then(r => r.json()),
-    fetch('data/patches.json').then(r => r.json()).catch(() => ({}))
+    fetch('data/questions.json' + qs).then(r => r.json()),
+    fetch('data/plan.json' + qs).then(r => r.json()),
+    fetch('data/notes.json' + qs).then(r => r.json()),
+    fetch('data/patches.json' + qs).then(r => r.json()).catch(() => ({}))
   ]);
   DATA.questions = q; DATA.plan = p; DATA.notes = n; DATA.patches = pat || {};
 }
@@ -326,13 +329,22 @@ function renderToday() {
     app.innerHTML = banner + resume + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + reviewCard;
   }
 }
+/* 今日某科是否已完成：dayDone 优先，兜底为 progress.done 中任一带今天日期的 {科}:* 完成
+   （兼容"导入旧备份但缺 dayDone"以及"按旧计划做了不同章"的情况，使今日页正确显示已完成） */
+function subjectDoneToday(subject) {
+  const td = localToday();
+  if (state.progress.dayDone && state.progress.dayDone[td] && state.progress.dayDone[td][subject]) return true;
+  const done = state.progress.done || {};
+  for (const k in done) if (k.indexOf(subject + ':') === 0 && done[k] === td) return true;
+  return false;
+}
 function chapterCard(subject, ch, label) {
   if (!ch) return `<div class="card"><span class="pill">${label}</span> <b>本章计划已学完 ✅</b><p class="muted">后续进入强化/模考阶段。</p></div>`;
   const noteTxt = (ch._note && DATA.notes[ch._note]) ? DATA.notes[ch._note] : (DATA.notes[ch.id] ? DATA.notes[ch.id] : '');
   const note = noteTxt ? `<div class="note">${esc(noteTxt)}</div>` : '';
   const cnt = (ch._to != null) ? (ch._to - ch._from) : (ch.questions ? ch.questions.length : 0);
   const hasQ = ch.questions && ch.questions.length;
-  const done = state.progress.dayDone && state.progress.dayDone[localToday()] && state.progress.dayDone[localToday()][subject];
+  const done = subjectDoneToday(subject);
   let btn;
   if (done) {
     btn = `<span class="pill g">✅ 今日已完成</span> <button class="btn ghost" onclick="startQuiz('${subject}','${ch.id}',${ch._from != null ? ch._from : 'null'},${ch._to != null ? ch._to : 'null'})">重做本段</button>`;
@@ -742,10 +754,63 @@ window.exportBackup = function () {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'econ-backup-' + localToday() + '.json'; a.click();
   toast('已导出备份文件');
 };
+/* 合并式导入：错题按 qid 去重并集、进度 done+dayDone 取晚、订正按 qid 取新 ts；绝不覆盖 settings */
+function mergeWrong(inc, cur) {
+  const map = {};
+  for (const w of (cur || [])) if (w && w.qid) map[w.qid] = w;
+  for (const w of (inc || [])) {
+    if (!w || !w.qid) continue;
+    const ex = map[w.qid];
+    if (!ex) { map[w.qid] = w; continue; }
+    const a = new Date(w.last || 0).getTime(), b = new Date(ex.last || 0).getTime();
+    map[w.qid] = (a >= b) ? w : ex; // 取较新记录
+  }
+  return Object.values(map);
+}
+function mergeProgress(inc, cur) {
+  const out = Object.assign({}, cur || {});
+  out.done = Object.assign({}, (cur && cur.done) || {});
+  if (inc && inc.done) for (const k in inc.done) {
+    const d1 = inc.done[k], d0 = out.done[k];
+    if (!d0 || new Date(d1) >= new Date(d0)) out.done[k] = d1; // 日期取较晚
+  }
+  out.dayDone = Object.assign({}, (cur && cur.dayDone) || {});
+  if (inc && inc.dayDone) for (const dt in inc.dayDone) out.dayDone[dt] = Object.assign({}, out.dayDone[dt], inc.dayDone[dt]);
+  // 迁移：备份缺 dayDone 但有旧 progress.done → 按 chapterKey→subject→date 重建，历史完成态不丢
+  if (inc && inc.done) for (const k in inc.done) {
+    const sub = k.split(':')[0], dt = inc.done[k];
+    out.dayDone[dt] = out.dayDone[dt] || {};
+    out.dayDone[dt][sub] = true;
+  }
+  if (inc) {
+    out.streak = Math.max(out.streak || 0, inc.streak || 0);
+    if (!out.lastStudy || (inc.lastStudy && new Date(inc.lastStudy) > new Date(out.lastStudy))) out.lastStudy = inc.lastStudy;
+  }
+  return out;
+}
+function mergeCorrections(inc, cur) {
+  const out = Object.assign({}, cur || {});
+  if (inc) for (const k in inc) {
+    const c0 = out[k], c1 = inc[k];
+    if (!c0) { out[k] = c1; continue; }
+    const t0 = new Date(c0.ts || 0).getTime(), t1 = new Date(c1.ts || 0).getTime();
+    out[k] = (t1 >= t0) ? c1 : c0; // 取较新版本
+  }
+  return out;
+}
 window.importBackup = function (input) {
   const f = input.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = () => { try { const p = JSON.parse(r.result); if (p.wrong) state.wrong = p.wrong; if (p.progress) state.progress = p.progress; if (p.corrections) state.corrections = p.corrections; saveWrong(); saveProgress(); saveCorrections(); toast('已导入备份 ✅'); router(); } catch (e) { toast('导入失败：' + e.message); } };
+  r.onload = () => { try {
+    const p = JSON.parse(r.result);
+    const nW = (p.wrong || []).length, nP = Object.keys(p.progress && p.progress.done || {}).length, nC = Object.keys(p.corrections || {}).length;
+    state.wrong = mergeWrong(p.wrong, state.wrong);
+    state.progress = mergeProgress(p.progress, state.progress);
+    state.corrections = mergeCorrections(p.corrections, state.corrections);
+    saveWrong(); saveProgress(); saveCorrections();
+    toast(`已合并导入 ✅（错题 ${nW} 道 / 进度 ${nP} 条 / 订正 ${nC} 条，已与本机数据合并）`);
+    router();
+  } catch (e) { toast('导入失败：' + e.message); } };
   r.readAsText(f);
 };
 
