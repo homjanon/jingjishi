@@ -38,30 +38,47 @@ async function saveSession() { await dbSet('session', state.session); }
 
 /* ---------------- 数据加载 ---------------- */
 async function loadData() {
-  const [q, p, n] = await Promise.all([
+  const [q, p, n, pat] = await Promise.all([
     fetch('data/questions.json').then(r => r.json()),
     fetch('data/plan.json').then(r => r.json()),
-    fetch('data/notes.json').then(r => r.json())
+    fetch('data/notes.json').then(r => r.json()),
+    fetch('data/patches.json').then(r => r.json()).catch(() => ({}))
   ]);
-  DATA.questions = q; DATA.plan = p; DATA.notes = n;
+  DATA.questions = q; DATA.plan = p; DATA.notes = n; DATA.patches = pat || {};
 }
 function findChapter(subject, cid) {
   const sub = DATA.questions[subject];
   return sub ? sub.chapters.find(c => c.id === cid) : null;
 }
 
-/* ---------------- 修正覆盖层（AI 精讲自动修正） ---------------- */
+/* ---------------- 修正覆盖层（repo patches + 本地 corrections） ---------------- */
 function applyCorrections(q) {
   if (!q || !q.id) return q;
-  if (state.settings.aiCorrect === false) return q;
+  let out = q;
+  // 1) 官方订正库（patches.json，站点启动加载，对所有人生效）
+  if (DATA.patches && DATA.patches[q.id]) {
+    const p = DATA.patches[q.id];
+    out = Object.assign({}, out, {
+      stem: p.stem != null ? p.stem : out.stem,
+      type: p.type != null ? p.type : out.type,
+      options: p.options != null ? p.options : out.options,
+      answer: p.answer != null ? p.answer : out.answer,
+      explanation: p.explanation != null ? p.explanation : out.explanation,
+      _patched: !!p.corrected
+    });
+  }
+  // 2) 本地个人订正（覆盖层，离线可用，优先级最高）
+  if (state.settings.aiCorrect === false) return out;
   const c = state.corrections[q.id];
-  if (!c) return q;
-  return Object.assign({}, q, {
-    explanation: c.explanation != null ? c.explanation : q.explanation,
-    answer: c.answer != null ? c.answer : q.answer,
-    options: c.options != null ? c.options : q.options,
+  if (!c) return out;
+  return Object.assign({}, out, {
+    stem: c.stem != null ? c.stem : out.stem,
+    type: c.type != null ? c.type : out.type,
+    explanation: c.explanation != null ? c.explanation : out.explanation,
+    answer: c.answer != null ? c.answer : out.answer,
+    options: c.options != null ? c.options : out.options,
     ai_explain: c.ai_explain, mnemonic: c.mnemonic, pitfall: c.pitfall,
-    _corrected: !!c.corrected
+    _corrected: !!c.corrected || !!out._patched
   });
 }
 function saveCorrection(qid, d) {
@@ -226,6 +243,33 @@ function scheduleSync() {
   clearTimeout(syncTimer);
   syncTimer = setTimeout(githubSave, 15000);
 }
+/* ---------------- 题库订正推送（patches.json 覆盖层） ---------------- */
+async function pushPatchesToRepo(extra) {
+  const s = state.settings;
+  if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 与仓库'); return; }
+  const path = 'data/patches.json';
+  const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
+  let sha, cur = {};
+  try {
+    const r = await fetch(url, { headers: { Authorization: 'token ' + s.token } });
+    if (r.ok) { const j = await r.json(); sha = j.sha; try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
+  } catch (e) { /* 文件可能还不存在，忽略 */ }
+  Object.assign(cur, extra);
+  const body = { message: 'add question patches', content: b64encode(JSON.stringify(cur, null, 2)), ...(sha ? { sha } : {}) };
+  try {
+    const r = await fetch(url, { method: 'PUT', headers: { Authorization: 'token ' + s.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.ok) toast('已推送到题库 ✅（下次打开站点即生效）');
+    else toast('推送失败：' + r.status + '（检查 Token/仓库）');
+  } catch (e) { toast('推送失败：' + e.message); }
+}
+function pushOnePatch(qid) {
+  const c = state.corrections[qid];
+  if (!c) { toast('本题暂无本地订正'); return; }
+  pushPatchesToRepo({ [qid]: c });
+}
+window.pushOnePatch = pushOnePatch;
+window.pushPatchesToRepo = pushPatchesToRepo;
+window.pushMyCorrections = function () { pushPatchesToRepo(Object.assign({}, state.corrections)); };
 
 /* ---------------- 路由 ---------------- */
 function router() {
@@ -239,6 +283,14 @@ function router() {
   else renderToday();
 }
 window.addEventListener('hashchange', router);
+/* 强制导航：当目标 hash 与当前相同（如刷题期间地址栏一直是 #/today）时，
+   直接调用 router 重渲染，避免"返回当日"点击无效。 */
+function nav(route) {
+  const h = '#/' + route;
+  if (location.hash === h) router();
+  else location.hash = h;
+}
+window.nav = nav;
 
 /* ---------------- 视图：今日任务 ---------------- */
 function renderToday() {
@@ -280,8 +332,11 @@ function chapterCard(subject, ch, label) {
   const note = noteTxt ? `<div class="note">${esc(noteTxt)}</div>` : '';
   const cnt = (ch._to != null) ? (ch._to - ch._from) : (ch.questions ? ch.questions.length : 0);
   const hasQ = ch.questions && ch.questions.length;
+  const done = state.progress.dayDone && state.progress.dayDone[localToday()] && state.progress.dayDone[localToday()][subject];
   let btn;
-  if (hasQ) {
+  if (done) {
+    btn = `<span class="pill g">✅ 今日已完成</span> <button class="btn ghost" onclick="startQuiz('${subject}','${ch.id}',${ch._from != null ? ch._from : 'null'},${ch._to != null ? ch._to : 'null'})">重做本段</button>`;
+  } else if (hasQ) {
     const df = (ch._from != null) ? ` data-from="${ch._from}"` : '';
     const dt = (ch._to != null) ? ` data-to="${ch._to}"` : '';
     btn = `<a class="btn" href="#/quiz" data-sub="${subject}" data-ch="${ch.id}"${df}${dt}>开始刷题（${cnt}题）</a>`;
@@ -306,10 +361,12 @@ function startQuiz(subject, chapterId, from, to) {
   const qs = ch.questions.slice(f, t);
   if (!qs.length) { toast('该段暂无题目'); return; }
   const queue = qs.map(q => ({ q: applyCorrections(q), subject, chapterId, chapterTitle: ch.title }));
+  const isSlice = (from != null) || (to != null);
   quiz = {
     queue, idx: 0, correct: 0, wrong: 0,
     title: ch.title + `（第${f + 1}-${f + qs.length}题）`, fromWrong: false,
-    _doneKeys: [subject + ':' + chapterId], _marksDoneWhenComplete: (t >= total)
+    _doneKeys: [subject + ':' + chapterId + (isSlice ? ('#' + f + '-' + t) : '')],
+    _marksDoneWhenComplete: isSlice ? true : (t >= total)
   };
   sessionFromQueue(queue, quiz.title, false, quiz._doneKeys, quiz._marksDoneWhenComplete);
   renderQuiz();
@@ -322,8 +379,8 @@ function startAll() {
   if (!items.length) { toast('今日暂无题目'); return; }
   const queue = items.map(it => ({ q: applyCorrections(it.q), subject: it.s, chapterId: it.ch.id, chapterTitle: it.ch.title }));
   const doneKeys = [];
-  if (t.economy) doneKeys.push('economy:' + t.economy.id);
-  if (t.business) doneKeys.push('business:' + t.business.id);
+  if (t.economy) doneKeys.push('economy:' + t.economy.id + '#' + t.economy._from + '-' + t.economy._to);
+  if (t.business) doneKeys.push('business:' + t.business.id + '#' + t.business._from + '-' + t.business._to);
   quiz = { queue, idx: 0, correct: 0, wrong: 0, title: '今日全部', fromWrong: false, _doneKeys: doneKeys, _marksDoneWhenComplete: true };
   sessionFromQueue(queue, '今日全部', false, doneKeys, true);
   renderQuiz();
@@ -398,7 +455,15 @@ function quizNext() {
 window.quizNext = quizNext;
 function renderQuizSummary() {
   if (state.session) { state.session = null; saveSession(); }
-  if (quiz._doneKeys && quiz._marksDoneWhenComplete) quiz._doneKeys.forEach(k => markStudy(k));
+  if (quiz._doneKeys && quiz._marksDoneWhenComplete) {
+    quiz._doneKeys.forEach(k => markStudy(k));
+    // 按题段记录当日完成态（供今日页显示"已完成"）
+    const td = localToday();
+    state.progress.dayDone = state.progress.dayDone || {};
+    state.progress.dayDone[td] = state.progress.dayDone[td] || {};
+    quiz._doneKeys.forEach(k => { const sub = k.split(':')[0]; state.progress.dayDone[td][sub] = true; });
+    saveProgress();
+  }
   const isWrong = quiz.fromWrong;
   app.innerHTML = `<div class="card"><h2>本轮完成 🎉</h2>
     <div class="stat">
@@ -407,7 +472,7 @@ function renderQuizSummary() {
       <div class="box"><b style="color:var(--red)">${quiz.wrong}</b>答错</div>
     </div>
     <p class="muted">${isWrong ? '已按记忆曲线更新每题的复习排程；答错的题已重置到近日重练，全部留在错题库长期保存。' : '答错的题已自动进入错题库，将按记忆曲线提醒你复习。'}</p>
-    <a class="btn" href="#/wrong">${isWrong ? '返回错题库' : '去错题库复习'}</a> <a class="btn ghost" href="#/today">返回今日</a>
+    <button class="btn" onclick="nav('${isWrong ? 'wrong' : 'today'}')">${isWrong ? '返回错题库' : '去错题库复习'}</button> <button class="btn ghost" onclick="nav('today')">返回今日</button>
   </div>`;
 }
 
@@ -648,7 +713,11 @@ function renderSettings() {
     <p class="muted" style="margin-top:10px">上次同步：${last}</p>
     <div class="note" style="margin-top:12px">
       <label style="margin:0 0 4px"><input type="checkbox" id="aic" ${s.aiCorrect === false ? '' : 'checked'}> 启用 <b>AI 自动修正</b>（精讲后自动补全/修正本题解析与答案）</label>
-      <button class="btn ghost" style="margin-top:8px" onclick="clearCorrections()">清除全部 AI 修正（${Object.keys(state.corrections).length}）</button>
+      <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn ghost" onclick="clearCorrections()">清除全部 AI 修正（${Object.keys(state.corrections).length}）</button>
+        <button class="btn" onclick="pushMyCorrections()">📤 批量推送我的订正到题库（${Object.keys(state.corrections).length}）</button>
+      </div>
+      <p class="muted" style="margin-top:6px">📥 站点启动会自动加载 <b>data/patches.json</b>（官方订正库），与你本地订正合并生效。推送需 GitHub Token；工作地无网时本地照常用，回家有网再点推送。</p>
     </div>
     <div class="note" style="margin-top:10px">⚠️ 若仓库为「公开」，你的错题/进度数据也会公开可见。需要隐私请：① 仓库设私有 + 升级 GitHub Pro 后用 GitHub Pages；或 ② 改用 Cloudflare Pages（免费支持私有仓库）。</div>
   </div>${renderAISettings()}`;
@@ -771,7 +840,7 @@ function aiExplainBtn(qid, force) {
   const ctx = qCtxOf(findQById(qid) || {});
   const body = aiBoxShell(box, "🤖 AI 精讲（大白话+口诀）");
   if (!force && (ctx.ai_explain || ctx.mnemonic)) {
-    renderExplainResult(body, { explain: ctx.ai_explain, mnemonic: ctx.mnemonic, pitfall: ctx.pitfall }, true);
+    renderExplainResult(body, { explain: ctx.ai_explain, mnemonic: ctx.mnemonic, pitfall: ctx.pitfall }, true, qid);
     return;
   }
   aiLoading(body);
@@ -779,13 +848,13 @@ function aiExplainBtn(qid, force) {
   const user = `【题目】${ctx.stem}\n【选项】\n${optText}\n【标准答案】${ctx.answer.join("、")}\n【官方解析】${ctx.explanation || "（无）"}\n\n请作为老师严格核验：用大白话+一个生活例子讲透考点，并编一句口诀。\n若你认为上方【标准答案】有误，请在 sourceWrong 填 true，并给出 correctAnswer（如 "A" 或 "AC"）和 correctOptions（与原选项同格式数组）；若正确则 sourceWrong 填 false。\n只返回 JSON：{"explain":"...","mnemonic":"...","pitfall":"...","sourceWrong":false,"correctAnswer":"","correctOptions":null}。`;
   callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], { json: true }).then(r => {
     if (r.error) { aiErr(body, r); return; }
-    renderExplainResult(body, r.content, false);
+    renderExplainResult(body, r.content, false, qid);
     saveCorrection(qid, r.content);
-    if (r.content && r.content.sourceWrong) toast('⚠️ 已用 AI 解析修正本题答案');
+    if (r.content && r.content.sourceWrong) toast('⚠️ 已用 AI 解析修正本题答案（本机已存，可推送到题库）');
     else toast('已用 AI 解析补全本题');
   });
 }
-function renderExplainResult(body, d, baked) {
+function renderExplainResult(body, d, baked, qid) {
   const corrected = d && d.sourceWrong;
   const badge = body.parentElement.querySelector("#aiBadge");
   if (badge) badge.innerHTML = corrected ? `<span class="ai-badge" style="background:var(--red)">已修正答案</span>` : (baked ? `<span class="ai-badge ok">离线缓存</span>` : `<span class="ai-badge ok">已生成</span>`);
@@ -793,7 +862,10 @@ function renderExplainResult(body, d, baked) {
     ${d.explain ? `<div class="ai-sec"><b>📘 大白话</b><p>${esc(d.explain)}</p></div>` : ""}
     ${d.mnemonic ? `<div class="ai-sec"><b>🔑 记忆口诀</b><p class="mnem">${esc(d.mnemonic)}</p></div>` : ""}
     ${d.pitfall ? `<div class="ai-sec"><b>⚠️ 易错提醒</b><p>${esc(d.pitfall)}</p></div>` : ""}
-    <div class="ai-foot"><button class="btn ghost" onclick="aiExplainBtn(currentAIQid, true)">🔄 重新生成</button></div>`;
+    <div class="ai-foot">
+      <button class="btn ghost" onclick="aiExplainBtn(currentAIQid, true)">🔄 重新生成</button>
+      ${corrected ? `<button class="btn" onclick="pushOnePatch('${qid}')">📤 推送此题订正到题库</button>` : ''}
+    </div>`;
 }
 function aiDiagnoseBtn(qid) {
   const w = state.wrong.find(x => x.qid === qid); if (!w) return;
@@ -825,13 +897,19 @@ function aiSimilarBtn(qid) {
     if (!d || !Array.isArray(d.options)) { aiErr(body, { error: "json", content: (typeof d === "string" ? d : JSON.stringify(d)) }); return; }
     const badge = body.parentElement.querySelector("#aiBadge");
     if (badge) badge.innerHTML = `<span class="ai-badge ok">已出题</span>`;
+    window._similar = window._similar || {};
+    window._similar[qid] = d;
     renderSimilarQuiz(body, d, qid);
   });
 }
 function renderSimilarQuiz(body, data, qid) {
   const opts = (data.options || []).map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join("");
   body.innerHTML = `<div class="q"><div class="stem">${esc(data.stem)}</div>${opts}<button class="btn g" id="simSubmit" disabled>提交</button><div class="explain" id="simExpl"></div></div>
-    <div class="ai-foot"><button class="btn ghost" onclick="aiSimilarBtn('${qid}')">🔄 换一道</button></div>`;
+    <div class="ai-foot">
+      <button class="btn ghost" onclick="aiSimilarBtn('${qid}')">🔄 换一道</button>
+      <button class="btn" onclick="replaceOriginal('${qid}')">📥 用此题替换原题</button>
+      <button class="btn ghost" onclick="pushOnePatch('${qid}')">📤 推送此题到题库</button>
+    </div>`;
   let ssel = new Set();
   const root = body;
   root.querySelectorAll(".opt").forEach(b => b.onclick = () => {
@@ -845,6 +923,17 @@ function renderSimilarQuiz(body, data, qid) {
     const ex = root.querySelector("#simExpl"); ex.innerHTML = `<b>答案：</b>${data.answer.join("、")}　|　<b>解析：</b>${esc(data.explanation || "")}`; ex.classList.add("show"); root.querySelector("#simSubmit").style.display = "none";
   };
 }
+/* 用举一反三生成的新题直接替换原题（写入本地 corrections 覆盖层，可选推送题库） */
+function replaceOriginal(qid) {
+  const d = (window._similar || {})[qid];
+  if (!d || !Array.isArray(d.options)) { toast('请先生成举一反三题目'); return; }
+  const ans = Array.isArray(d.answer) ? d.answer : [d.answer];
+  const patch = { type: d.type || 'single', stem: d.stem, options: d.options, answer: ans, explanation: d.explanation || '', corrected: true, ts: new Date().toISOString() };
+  state.corrections[qid] = Object.assign(state.corrections[qid] || {}, patch);
+  saveCorrections();
+  toast('已用新题替换原题（本机生效，可推送到题库）');
+}
+window.replaceOriginal = replaceOriginal;
 function renderAISettings() {
   const p = aiCfg().provider;
   const opts = Object.keys(AI_PRESETS).map(k => `<option value="${k}" ${k === p ? "selected" : ""}>${AI_PRESETS[k].name}</option>`).join("");
