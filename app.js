@@ -360,8 +360,9 @@ function chapterCard(subject, ch, label) {
   } else {
     btn = `<span class="muted">本章题库待补充，可先看笔记。</span>`;
   }
-  const noteRead = isNoteRead(subject, ch.id);
-  const noteBtn = `<a class="btn ghost" href="#/notes?date=${localToday()}" title="看今日配套笔记">📒 看笔记${noteRead ? '✓' : ''}</a>`;
+  const ncid = todayNoteChapter(subject);
+  const noteRead = ncid && isNoteRead(subject, ncid);
+  const noteBtn = `<a class="btn ghost" href="#/notes?date=${localToday()}" title="看今日教材笔记">📒 看笔记${noteRead ? '✓' : ''}</a>`;
   return `<div class="card">
     <span class="pill ${subject === 'business' ? 'g' : ''}">${label}</span>
     <h3>${esc(ch.title)}</h3>
@@ -608,6 +609,10 @@ window.startWrongAll = startWrongAll;
 function isNoteRead(sub, chapter) {
   return !!(state.progress.notesDone && state.progress.notesDone[sub + ':' + chapter]);
 }
+function todayNoteChapter(subject) {
+  const t = (DATA.plan.days || []).find(d => d.date === localToday());
+  return t && t[subject] ? t[subject].noteChapter || null : null;
+}
 function renderDayNotes(date) {
   const P = DATA.plan;
   const day = (P.days || []).find(d => d.date === date);
@@ -616,8 +621,9 @@ function renderDayNotes(date) {
     return;
   }
   const subs = [];
-  if (day.economy) subs.push(['economy', '经济基础', day.economy.chapter]);
-  if (day.business) subs.push(['business', '工商管理', day.business.chapter]);
+  if (day.economy && day.economy.noteChapter) subs.push(['economy', '经济基础', day.economy.noteChapter]);
+  if (day.business && day.business.noteChapter) subs.push(['business', '工商管理', day.business.noteChapter]);
+  if (!subs.length) { app.innerHTML = `<div class="card"><h2>📒 今日笔记</h2><p class="muted">当天未安排笔记章节。</p><a class="btn" href="#/plan">← 返回计划</a></div>`; return; }
   let body = '', allRead = true, anyNote = false;
   for (const [sub, label, cid] of subs) {
     const ch = findChapter(sub, cid);
@@ -727,9 +733,11 @@ function renderPlan() {
     for (const d of phDays) {
       const eco = d.economy ? dayCell('economy', d.economy) : '<span class="muted">—</span>';
       const bus = d.business ? dayCell('business', d.business) : '<span class="muted">—</span>';
-      const noteChaps = [d.economy && d.economy.chapter, d.business && d.business.chapter].filter(Boolean);
-      const noteRead = noteChaps.length && noteChaps.every(c => isNoteRead((d.economy && d.economy.chapter === c) ? 'economy' : 'business', c));
-      const note = noteChaps.length ? `<a class="btn ghost" style="padding:4px 10px;font-size:12px" href="#/notes?date=${d.date}" title="今日配套笔记">📒 看笔记(${noteChaps.join('/')})${noteRead ? '✓' : ''}</a>` : '';
+      const ne = d.economy && d.economy.noteChapter;
+      const nb = d.business && d.business.noteChapter;
+      const noteChaps = [ne, nb].filter(Boolean);
+      const noteRead = noteChaps.length && noteChaps.every(c => isNoteRead((ne === c) ? 'economy' : 'business', c));
+      const note = noteChaps.length ? `<a class="btn ghost" style="padding:4px 10px;font-size:12px" href="#/notes?date=${d.date}" title="今日配套笔记（教材三色笔记）">📒 看笔记(${noteChaps.join('/')})${noteRead ? '✓' : ''}</a>` : '';
       const done = (d.economy && state.progress.done['economy:' + d.economy.chapter]) && (d.business && state.progress.done['business:' + d.business.chapter]);
       const cls = d.date === today ? 'a' : (done ? 'g' : '');
       const status = d.date === today ? '今天' : (d.date < today ? (done ? '已完成' : '待补学') : '待开始');
