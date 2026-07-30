@@ -25,7 +25,7 @@ async function dbSet(key, val) {
 }
 async function loadState() {
   state.wrong = await dbGet('wrong') || [];
-  state.progress = await dbGet('progress') || { done: {}, streak: 0, lastStudy: '' };
+  state.progress = await dbGet('progress') || { done: {}, notesDone: {}, streak: 0, lastStudy: '' };
   state.settings = await dbGet('settings') || {};
   state.corrections = await dbGet('corrections') || {};
   state.session = await dbGet('session') || null;
@@ -276,7 +276,12 @@ window.pushMyCorrections = function () { pushPatchesToRepo(Object.assign({}, sta
 
 /* ---------------- 路由 ---------------- */
 function router() {
-  const route = (location.hash || '#/today').replace('#/', '').split('?')[0];
+  const raw = (location.hash || '#/today').replace('#/', '');
+  const _parts = raw.split('?');
+  const route = _parts[0];
+  const _q = {};
+  if (_parts[1]) _parts[1].split('&').forEach(p => { const kv = p.split('='); if (kv[0]) _q[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); });
+  window._q = _q;
   document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
   if (route === 'wrong') renderWrong();
   else if (route === 'notes') renderNotes();
@@ -355,11 +360,13 @@ function chapterCard(subject, ch, label) {
   } else {
     btn = `<span class="muted">本章题库待补充，可先看笔记。</span>`;
   }
+  const noteRead = isNoteRead(subject, ch.id);
+  const noteBtn = `<a class="btn ghost" href="#/notes?date=${localToday()}" title="看今日配套笔记">📒 看笔记${noteRead ? '✓' : ''}</a>`;
   return `<div class="card">
     <span class="pill ${subject === 'business' ? 'g' : ''}">${label}</span>
     <h3>${esc(ch.title)}</h3>
     ${note}
-    <div style="margin-top:12px">${btn}</div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">${btn} ${noteBtn}</div>
   </div>`;
 }
 
@@ -598,7 +605,66 @@ window.startWrongDue = startWrongDue;
 window.startWrongAll = startWrongAll;
 
 /* ---------------- 视图：笔记 ---------------- */
+function isNoteRead(sub, chapter) {
+  return !!(state.progress.notesDone && state.progress.notesDone[sub + ':' + chapter]);
+}
+function renderDayNotes(date) {
+  const P = DATA.plan;
+  const day = (P.days || []).find(d => d.date === date);
+  if (!day) {
+    app.innerHTML = `<div class="card"><h2>📒 今日笔记</h2><p class="muted">未找到 ${date} 的计划。</p><a class="btn" href="#/plan">← 返回计划</a></div>`;
+    return;
+  }
+  const subs = [];
+  if (day.economy) subs.push(['economy', '经济基础', day.economy.chapter]);
+  if (day.business) subs.push(['business', '工商管理', day.business.chapter]);
+  let body = '', allRead = true, anyNote = false;
+  for (const [sub, label, cid] of subs) {
+    const ch = findChapter(sub, cid);
+    const title = ch ? ch.title : cid;
+    const note = DATA.notes[cid];
+    const read = isNoteRead(sub, cid);
+    if (!read) allRead = false;
+    if (note) anyNote = true;
+    const inner = note ? `<div class="note">${esc(note)}</div>` : `<p class="muted">本节无配套笔记，可直接刷题。</p>`;
+    body += `<div class="card note-item">
+      <span class="pill ${sub === 'business' ? 'g' : ''}">${label}</span>
+      <h3>${esc(title)} ${read ? '<span class="pill g">📒 已读</span>' : ''}</h3>
+      ${inner}
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        ${ch && ch.questions && ch.questions.length ? `<a class="btn" href="#/quiz" data-sub="${sub}" data-ch="${cid}">去刷题（${ch.questions.length}）</a>` : ''}
+        <button class="btn ghost" onclick="markNoteRead('${sub}','${cid}','${date}')">${read ? '✓ 已读' : '标记为已读'}</button>
+      </div></div>`;
+  }
+  const isToday = date === localToday();
+  const markAll = (day.economy && day.business) ? `<button class="btn" onclick="markDayNotesRead('${date}')">✓ 我已读完今日笔记</button>` : '';
+  app.innerHTML = `<div class="card">
+    <a class="btn ghost" href="#/plan">← 返回 ${date} 计划</a>
+    <h2>📒 ${date} 笔记任务</h2>
+    <p class="muted">${day.focus || '今日配套笔记'}　|　${isToday ? '今日' : '复习日'}：经济基础 + 工商管理 各一章${anyNote ? '' : '（本章暂无笔记）'}</p>
+    ${allRead ? '<span class="pill g">📒 今日笔记已全部读完</span>' : ''}
+    <div style="margin-top:10px">${markAll}</div>
+  </div>${body}`;
+}
+window.markNoteRead = function (sub, cid, date) {
+  state.progress.notesDone = state.progress.notesDone || {};
+  state.progress.notesDone[sub + ':' + cid] = localToday();
+  saveProgress();
+  toast('已标记笔记已读 ✅');
+  renderDayNotes(date);
+};
+window.markDayNotesRead = function (date) {
+  const day = (DATA.plan.days || []).find(d => d.date === date);
+  if (!day) return;
+  state.progress.notesDone = state.progress.notesDone || {};
+  if (day.economy) state.progress.notesDone['economy:' + day.economy.chapter] = localToday();
+  if (day.business) state.progress.notesDone['business:' + day.business.chapter] = localToday();
+  saveProgress();
+  toast('今日笔记已全部标记已读 ✅');
+  renderDayNotes(date);
+};
 function renderNotes() {
+  if (window._q && window._q.date) { renderDayNotes(window._q.date); return; }
   const subjects = [['economy', '经济基础'], ['business', '工商管理']];
   let html = `<div class="card"><h2>📒 三色 / 四色笔记</h2>
     <p class="muted">按教材章节整理：<b style="color:var(--red)">红</b>=必考　<b style="color:var(--amber-d)">黄</b>=易混　<b style="color:var(--blue-d)">蓝</b>=真题出处。点击「去刷题」可做该章真题。</p>
@@ -661,7 +727,9 @@ function renderPlan() {
     for (const d of phDays) {
       const eco = d.economy ? dayCell('economy', d.economy) : '<span class="muted">—</span>';
       const bus = d.business ? dayCell('business', d.business) : '<span class="muted">—</span>';
-      const note = d.note ? `<a class="btn ghost" style="padding:4px 10px;font-size:12px" href="#/notes">看笔记</a>` : '';
+      const noteChaps = [d.economy && d.economy.chapter, d.business && d.business.chapter].filter(Boolean);
+      const noteRead = noteChaps.length && noteChaps.every(c => isNoteRead((d.economy && d.economy.chapter === c) ? 'economy' : 'business', c));
+      const note = noteChaps.length ? `<a class="btn ghost" style="padding:4px 10px;font-size:12px" href="#/notes?date=${d.date}" title="今日配套笔记">📒 看笔记(${noteChaps.join('/')})${noteRead ? '✓' : ''}</a>` : '';
       const done = (d.economy && state.progress.done['economy:' + d.economy.chapter]) && (d.business && state.progress.done['business:' + d.business.chapter]);
       const cls = d.date === today ? 'a' : (done ? 'g' : '');
       const status = d.date === today ? '今天' : (d.date < today ? (done ? '已完成' : '待补学') : '待开始');
@@ -776,6 +844,12 @@ function mergeProgress(inc, cur) {
   }
   out.dayDone = Object.assign({}, (cur && cur.dayDone) || {});
   if (inc && inc.dayDone) for (const dt in inc.dayDone) out.dayDone[dt] = Object.assign({}, out.dayDone[dt], inc.dayDone[dt]);
+  // 笔记已读合并：按 chapterKey 取较晚日期（与 done 同策略）
+  out.notesDone = Object.assign({}, (cur && cur.notesDone) || {});
+  if (inc && inc.notesDone) for (const k in inc.notesDone) {
+    const d1 = inc.notesDone[k], d0 = out.notesDone[k];
+    if (!d0 || new Date(d1) >= new Date(d0)) out.notesDone[k] = d1;
+  }
   // 迁移：备份缺 dayDone 但有旧 progress.done → 按 chapterKey→subject→date 重建，历史完成态不丢
   if (inc && inc.done) for (const k in inc.done) {
     const sub = k.split(':')[0], dt = inc.done[k];
