@@ -22,6 +22,14 @@
   "e48",
   "e46",
   "e47",
+  "e49",
+  "e48",
+  "e46",
+  "e47",
+  "e49",
+  "e48",
+  "e46",
+  "e47",
   "e1",
   "e2",
   "e3",
@@ -69,6 +77,10 @@
   "b20",
   "b22",
   "b21",
+  "b22",
+  "b21",
+  "b22",
+  "b21",
   "b1",
   "b2",
   "b3",
@@ -114,13 +126,15 @@
     "chapter": "e38",
     "from": 0,
     "to": 40,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e1"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 35,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "b1"
    },
    "note": "e38",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -131,13 +145,15 @@
     "chapter": "e46",
     "from": 0,
     "to": 40,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e2"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 35,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b1"
    },
    "note": "测试日·2025真题",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -148,13 +164,15 @@
     "chapter": "e46",
     "from": 40,
     "to": 80,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e3"
    },
    "business": {
     "chapter": "b21",
     "from": 35,
     "to": 70,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b1"
    },
    "note": "测试日·2025真题",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -165,13 +183,15 @@
     "chapter": "e38",
     "from": 0,
     "to": 40,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e4"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 35,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b2"
    },
    "note": "e38",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -182,13 +202,15 @@
     "chapter": "e38",
     "from": 40,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e5"
    },
    "business": {
     "chapter": "b12",
     "from": 35,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b2"
    },
    "note": "e38",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -199,13 +221,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 40,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e6"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 35,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b2"
    },
    "note": "e39",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -216,13 +240,15 @@
     "chapter": "e39",
     "from": 40,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e7"
    },
    "business": {
     "chapter": "b13",
     "from": 35,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b3"
    },
    "note": "e39",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -233,13 +259,15 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e8"
    },
    "business": {
     "chapter": "b14",
     "from": 0,
     "to": 35,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b3"
    },
    "note": "e40",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -250,13 +278,15 @@
     "chapter": "e41",
     "from": 0,
     "to": 47,
-    "note": "e41"
+    "note": "e41",
+    "noteChapter": "e9"
    },
    "business": {
     "chapter": "b14",
     "from": 35,
     "to": 70,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b3"
    },
    "note": "e41",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -267,13 +297,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 40,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e10"
    },
    "business": {
     "chapter": "b14",
     "from": 70,
     "to": 89,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b4"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -284,13 +316,15 @@
     "chapter": "e49",
     "from": 40,
     "to": 80,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e11"
    },
    "business": {
     "chapter": "b15",
     "from": 0,
     "to": 35,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b4"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -301,13 +335,15 @@
     "chapter": "e49",
     "from": 80,
     "to": 105,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e12"
    },
    "business": {
     "chapter": "b15",
     "from": 35,
     "to": 68,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b4"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -318,13 +354,15 @@
     "chapter": "e42",
     "from": 0,
     "to": 40,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e13"
    },
    "business": {
     "chapter": "b22",
     "from": 0,
     "to": 35,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b5"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -335,13 +373,15 @@
     "chapter": "e42",
     "from": 40,
     "to": 80,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e14"
    },
    "business": {
     "chapter": "b22",
     "from": 35,
     "to": 70,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b5"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -352,13 +392,15 @@
     "chapter": "e42",
     "from": 80,
     "to": 99,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e15"
    },
    "business": {
     "chapter": "b22",
     "from": 70,
     "to": 100,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b5"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -369,13 +411,15 @@
     "chapter": "e43",
     "from": 0,
     "to": 40,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e16"
    },
    "business": {
     "chapter": "b16",
     "from": 0,
     "to": 35,
-    "note": "b16"
+    "note": "b16",
+    "noteChapter": "b6"
    },
    "note": "e43",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -386,13 +430,15 @@
     "chapter": "e43",
     "from": 40,
     "to": 66,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e17"
    },
    "business": {
     "chapter": "b16",
     "from": 35,
     "to": 55,
-    "note": "b16"
+    "note": "b16",
+    "noteChapter": "b6"
    },
    "note": "e43",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -403,13 +449,15 @@
     "chapter": "e44",
     "from": 0,
     "to": 34,
-    "note": "e44"
+    "note": "e44",
+    "noteChapter": "e18"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 35,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b6"
    },
    "note": "e44",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -420,13 +468,15 @@
     "chapter": "e48",
     "from": 0,
     "to": 40,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e19"
    },
    "business": {
     "chapter": "b21",
     "from": 35,
     "to": 70,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b7"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -437,13 +487,15 @@
     "chapter": "e48",
     "from": 40,
     "to": 80,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e20"
    },
    "business": {
     "chapter": "b21",
     "from": 70,
     "to": 100,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b7"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -454,13 +506,15 @@
     "chapter": "e48",
     "from": 80,
     "to": 105,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e21"
    },
    "business": {
     "chapter": "b17",
     "from": 0,
     "to": 13,
-    "note": "b17"
+    "note": "b17",
+    "noteChapter": "b7"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -471,13 +525,15 @@
     "chapter": "e46",
     "from": 0,
     "to": 40,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e22"
    },
    "business": {
     "chapter": "b19",
     "from": 0,
     "to": 35,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b8"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -488,13 +544,15 @@
     "chapter": "e46",
     "from": 40,
     "to": 80,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e23"
    },
    "business": {
     "chapter": "b19",
     "from": 35,
     "to": 70,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b8"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -505,13 +563,15 @@
     "chapter": "e46",
     "from": 80,
     "to": 105,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e24"
    },
    "business": {
     "chapter": "b19",
     "from": 70,
     "to": 105,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b8"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -522,13 +582,15 @@
     "chapter": "e47",
     "from": 0,
     "to": 40,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e25"
    },
    "business": {
     "chapter": "b19",
     "from": 105,
     "to": 140,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b9"
    },
    "note": "e47",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -539,13 +601,15 @@
     "chapter": "e47",
     "from": 40,
     "to": 80,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e26"
    },
    "business": {
     "chapter": "b19",
     "from": 140,
     "to": 177,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b9"
    },
    "note": "e47",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -556,13 +620,15 @@
     "chapter": "e47",
     "from": 80,
     "to": 105,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e27"
    },
    "business": {
     "chapter": "b20",
     "from": 0,
     "to": 35,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b9"
    },
    "note": "e47",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -573,13 +639,15 @@
     "chapter": "e45",
     "from": 0,
     "to": 40,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e28"
    },
    "business": {
     "chapter": "b20",
     "from": 35,
     "to": 70,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b10"
    },
    "note": "e45",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -590,13 +658,15 @@
     "chapter": "e45",
     "from": 40,
     "to": 80,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e30"
    },
    "business": {
     "chapter": "b20",
     "from": 70,
     "to": 91,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b10"
    },
    "note": "e45",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -607,13 +677,15 @@
     "chapter": "e45",
     "from": 80,
     "to": 101,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e31"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 35,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b10"
    },
    "note": "e45",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -624,13 +696,15 @@
     "chapter": "e38",
     "from": 0,
     "to": 40,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e34"
    },
    "business": {
     "chapter": "b12",
     "from": 35,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b11"
    },
    "note": "e38",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -641,13 +715,15 @@
     "chapter": "e38",
     "from": 40,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e35"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 35,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b11"
    },
    "note": "e38",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -658,13 +734,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 40,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e36"
    },
    "business": {
     "chapter": "b13",
     "from": 35,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b11"
    },
    "note": "e39",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -675,13 +753,15 @@
     "chapter": "e39",
     "from": 40,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e1"
    },
    "business": {
     "chapter": "b14",
     "from": 0,
     "to": 35,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b1"
    },
    "note": "e39",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -692,13 +772,15 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e2"
    },
    "business": {
     "chapter": "b14",
     "from": 35,
     "to": 70,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b1"
    },
    "note": "e40",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -709,13 +791,15 @@
     "chapter": "e41",
     "from": 0,
     "to": 47,
-    "note": "e41"
+    "note": "e41",
+    "noteChapter": "e3"
    },
    "business": {
     "chapter": "b14",
     "from": 70,
     "to": 89,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b1"
    },
    "note": "e41",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -726,13 +810,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 40,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e4"
    },
    "business": {
     "chapter": "b15",
     "from": 0,
     "to": 35,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b2"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -743,13 +829,15 @@
     "chapter": "e49",
     "from": 40,
     "to": 80,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e5"
    },
    "business": {
     "chapter": "b15",
     "from": 35,
     "to": 68,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b2"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -760,13 +848,15 @@
     "chapter": "e49",
     "from": 80,
     "to": 105,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e6"
    },
    "business": {
     "chapter": "b22",
     "from": 0,
     "to": 35,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b2"
    },
    "note": "e49",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -777,13 +867,15 @@
     "chapter": "e42",
     "from": 0,
     "to": 40,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e7"
    },
    "business": {
     "chapter": "b22",
     "from": 35,
     "to": 70,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b3"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -794,13 +886,15 @@
     "chapter": "e42",
     "from": 40,
     "to": 80,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e8"
    },
    "business": {
     "chapter": "b22",
     "from": 70,
     "to": 100,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b3"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -811,13 +905,15 @@
     "chapter": "e42",
     "from": 80,
     "to": 99,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e9"
    },
    "business": {
     "chapter": "b16",
     "from": 0,
     "to": 35,
-    "note": "b16"
+    "note": "b16",
+    "noteChapter": "b3"
    },
    "note": "e42",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -828,13 +924,15 @@
     "chapter": "e43",
     "from": 0,
     "to": 40,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e10"
    },
    "business": {
     "chapter": "b16",
     "from": 35,
     "to": 55,
-    "note": "b16"
+    "note": "b16",
+    "noteChapter": "b4"
    },
    "note": "e43",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -845,13 +943,15 @@
     "chapter": "e43",
     "from": 40,
     "to": 66,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e11"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 35,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b4"
    },
    "note": "e43",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -862,13 +962,15 @@
     "chapter": "e44",
     "from": 0,
     "to": 34,
-    "note": "e44"
+    "note": "e44",
+    "noteChapter": "e12"
    },
    "business": {
     "chapter": "b21",
     "from": 35,
     "to": 70,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b4"
    },
    "note": "e44",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -879,13 +981,15 @@
     "chapter": "e48",
     "from": 0,
     "to": 40,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e13"
    },
    "business": {
     "chapter": "b21",
     "from": 70,
     "to": 100,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b5"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -896,13 +1000,15 @@
     "chapter": "e48",
     "from": 40,
     "to": 80,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e14"
    },
    "business": {
     "chapter": "b17",
     "from": 0,
     "to": 13,
-    "note": "b17"
+    "note": "b17",
+    "noteChapter": "b5"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -913,13 +1019,15 @@
     "chapter": "e48",
     "from": 80,
     "to": 105,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e15"
    },
    "business": {
     "chapter": "b19",
     "from": 0,
     "to": 35,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b5"
    },
    "note": "e48",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -930,13 +1038,15 @@
     "chapter": "e46",
     "from": 0,
     "to": 40,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e16"
    },
    "business": {
     "chapter": "b19",
     "from": 35,
     "to": 70,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b6"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -947,13 +1057,15 @@
     "chapter": "e46",
     "from": 40,
     "to": 80,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e17"
    },
    "business": {
     "chapter": "b19",
     "from": 70,
     "to": 105,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b6"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -964,13 +1076,15 @@
     "chapter": "e46",
     "from": 80,
     "to": 105,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e18"
    },
    "business": {
     "chapter": "b19",
     "from": 105,
     "to": 140,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b6"
    },
    "note": "e46",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -981,13 +1095,15 @@
     "chapter": "e47",
     "from": 0,
     "to": 40,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e19"
    },
    "business": {
     "chapter": "b19",
     "from": 140,
     "to": 177,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b7"
    },
    "note": "e47",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -998,13 +1114,15 @@
     "chapter": "e47",
     "from": 40,
     "to": 80,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e20"
    },
    "business": {
     "chapter": "b20",
     "from": 0,
     "to": 35,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b7"
    },
    "note": "e47",
    "focus": "基础通关·按章刷真题+看笔记"
@@ -1015,13 +1133,15 @@
     "chapter": "e38",
     "from": 0,
     "to": 50,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e21"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 45,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b7"
    },
    "note": "e38",
    "focus": "强化专项·薄弱章回刷"
@@ -1032,13 +1152,15 @@
     "chapter": "e38",
     "from": 50,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e22"
    },
    "business": {
     "chapter": "b12",
     "from": 45,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b8"
    },
    "note": "e38",
    "focus": "强化专项·薄弱章回刷"
@@ -1049,13 +1171,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 50,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e23"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 45,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b8"
    },
    "note": "e39",
    "focus": "强化专项·薄弱章回刷"
@@ -1066,13 +1190,15 @@
     "chapter": "e39",
     "from": 50,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e24"
    },
    "business": {
     "chapter": "b13",
     "from": 45,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b8"
    },
    "note": "e39",
    "focus": "强化专项·薄弱章回刷"
@@ -1083,13 +1209,15 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e25"
    },
    "business": {
     "chapter": "b14",
     "from": 0,
     "to": 45,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b9"
    },
    "note": "e40",
    "focus": "强化专项·薄弱章回刷"
@@ -1100,13 +1228,15 @@
     "chapter": "e41",
     "from": 0,
     "to": 47,
-    "note": "e41"
+    "note": "e41",
+    "noteChapter": "e26"
    },
    "business": {
     "chapter": "b14",
     "from": 45,
     "to": 89,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b9"
    },
    "note": "e41",
    "focus": "强化专项·薄弱章回刷"
@@ -1117,13 +1247,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 50,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e27"
    },
    "business": {
     "chapter": "b15",
     "from": 0,
     "to": 45,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b9"
    },
    "note": "e49",
    "focus": "强化专项·薄弱章回刷"
@@ -1134,13 +1266,15 @@
     "chapter": "e49",
     "from": 50,
     "to": 105,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e28"
    },
    "business": {
     "chapter": "b15",
     "from": 45,
     "to": 68,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b10"
    },
    "note": "e49",
    "focus": "强化专项·薄弱章回刷"
@@ -1151,13 +1285,15 @@
     "chapter": "e42",
     "from": 0,
     "to": 50,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e30"
    },
    "business": {
     "chapter": "b22",
     "from": 0,
     "to": 45,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b10"
    },
    "note": "e42",
    "focus": "强化专项·薄弱章回刷"
@@ -1168,13 +1304,15 @@
     "chapter": "e42",
     "from": 50,
     "to": 99,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e31"
    },
    "business": {
     "chapter": "b22",
     "from": 45,
     "to": 100,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b10"
    },
    "note": "e42",
    "focus": "强化专项·薄弱章回刷"
@@ -1185,13 +1323,15 @@
     "chapter": "e43",
     "from": 0,
     "to": 50,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e34"
    },
    "business": {
     "chapter": "b16",
     "from": 0,
     "to": 55,
-    "note": "b16"
+    "note": "b16",
+    "noteChapter": "b11"
    },
    "note": "e43",
    "focus": "强化专项·薄弱章回刷"
@@ -1202,13 +1342,15 @@
     "chapter": "e43",
     "from": 50,
     "to": 66,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e35"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 45,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b11"
    },
    "note": "e43",
    "focus": "强化专项·薄弱章回刷"
@@ -1219,13 +1361,15 @@
     "chapter": "e44",
     "from": 0,
     "to": 34,
-    "note": "e44"
+    "note": "e44",
+    "noteChapter": "e36"
    },
    "business": {
     "chapter": "b21",
     "from": 45,
     "to": 100,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b11"
    },
    "note": "e44",
    "focus": "强化专项·薄弱章回刷"
@@ -1236,13 +1380,15 @@
     "chapter": "e48",
     "from": 0,
     "to": 50,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e1"
    },
    "business": {
     "chapter": "b17",
     "from": 0,
     "to": 13,
-    "note": "b17"
+    "note": "b17",
+    "noteChapter": "b1"
    },
    "note": "e48",
    "focus": "强化专项·薄弱章回刷"
@@ -1253,13 +1399,15 @@
     "chapter": "e48",
     "from": 50,
     "to": 105,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e2"
    },
    "business": {
     "chapter": "b19",
     "from": 0,
     "to": 45,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b1"
    },
    "note": "e48",
    "focus": "强化专项·薄弱章回刷"
@@ -1270,13 +1418,15 @@
     "chapter": "e46",
     "from": 0,
     "to": 50,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e3"
    },
    "business": {
     "chapter": "b19",
     "from": 45,
     "to": 90,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b1"
    },
    "note": "e46",
    "focus": "强化专项·薄弱章回刷"
@@ -1287,13 +1437,15 @@
     "chapter": "e46",
     "from": 50,
     "to": 105,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e4"
    },
    "business": {
     "chapter": "b19",
     "from": 90,
     "to": 135,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b2"
    },
    "note": "e46",
    "focus": "强化专项·薄弱章回刷"
@@ -1304,13 +1456,15 @@
     "chapter": "e47",
     "from": 0,
     "to": 50,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e5"
    },
    "business": {
     "chapter": "b19",
     "from": 135,
     "to": 177,
-    "note": "b19"
+    "note": "b19",
+    "noteChapter": "b2"
    },
    "note": "e47",
    "focus": "强化专项·薄弱章回刷"
@@ -1321,13 +1475,15 @@
     "chapter": "e47",
     "from": 50,
     "to": 105,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e6"
    },
    "business": {
     "chapter": "b20",
     "from": 0,
     "to": 45,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b2"
    },
    "note": "e47",
    "focus": "强化专项·薄弱章回刷"
@@ -1338,13 +1494,15 @@
     "chapter": "e45",
     "from": 0,
     "to": 50,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e7"
    },
    "business": {
     "chapter": "b20",
     "from": 45,
     "to": 91,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b3"
    },
    "note": "e45",
    "focus": "强化专项·薄弱章回刷"
@@ -1355,13 +1513,15 @@
     "chapter": "e45",
     "from": 50,
     "to": 101,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e8"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 45,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b3"
    },
    "note": "e45",
    "focus": "强化专项·薄弱章回刷"
@@ -1372,13 +1532,15 @@
     "chapter": "e38",
     "from": 0,
     "to": 50,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e9"
    },
    "business": {
     "chapter": "b12",
     "from": 45,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b3"
    },
    "note": "e38",
    "focus": "强化专项·薄弱章回刷"
@@ -1389,13 +1551,15 @@
     "chapter": "e38",
     "from": 50,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e10"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 45,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b4"
    },
    "note": "e38",
    "focus": "强化专项·薄弱章回刷"
@@ -1406,13 +1570,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 50,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e11"
    },
    "business": {
     "chapter": "b13",
     "from": 45,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b4"
    },
    "note": "e39",
    "focus": "强化专项·薄弱章回刷"
@@ -1423,13 +1589,15 @@
     "chapter": "e39",
     "from": 50,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e12"
    },
    "business": {
     "chapter": "b14",
     "from": 0,
     "to": 45,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b4"
    },
    "note": "e39",
    "focus": "强化专项·薄弱章回刷"
@@ -1440,13 +1608,15 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e13"
    },
    "business": {
     "chapter": "b14",
     "from": 45,
     "to": 89,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b5"
    },
    "note": "e40",
    "focus": "强化专项·薄弱章回刷"
@@ -1457,13 +1627,15 @@
     "chapter": "e41",
     "from": 0,
     "to": 47,
-    "note": "e41"
+    "note": "e41",
+    "noteChapter": "e14"
    },
    "business": {
     "chapter": "b15",
     "from": 0,
     "to": 45,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b5"
    },
    "note": "e41",
    "focus": "强化专项·薄弱章回刷"
@@ -1474,13 +1646,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 50,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e15"
    },
    "business": {
     "chapter": "b15",
     "from": 45,
     "to": 68,
-    "note": "b15"
+    "note": "b15",
+    "noteChapter": "b5"
    },
    "note": "e49",
    "focus": "强化专项·薄弱章回刷"
@@ -1491,7 +1665,8 @@
     "chapter": "e46",
     "from": 0,
     "to": 105,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e16"
    },
    "business": null,
    "note": "e46",
@@ -1503,13 +1678,15 @@
     "chapter": "e47",
     "from": 0,
     "to": 105,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e17"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 100,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b6"
    },
    "note": "e47",
    "focus": "冲刺模考·整套真题限时练"
@@ -1520,7 +1697,8 @@
     "chapter": "e48",
     "from": 0,
     "to": 105,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e18"
    },
    "business": null,
    "note": "e48",
@@ -1532,13 +1710,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 105,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e19"
    },
    "business": {
     "chapter": "b22",
     "from": 0,
     "to": 100,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b7"
    },
    "note": "e49",
    "focus": "冲刺模考·整套真题限时练"
@@ -1549,7 +1729,8 @@
     "chapter": "e38",
     "from": 0,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e20"
    },
    "business": null,
    "note": "e38",
@@ -1561,13 +1742,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e21"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b7"
    },
    "note": "e39",
    "focus": "冲刺模考·整套真题限时练"
@@ -1578,7 +1761,8 @@
     "chapter": "e42",
     "from": 0,
     "to": 99,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e22"
    },
    "business": null,
    "note": "e42",
@@ -1590,13 +1774,15 @@
     "chapter": "e45",
     "from": 0,
     "to": 101,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e23"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b8"
    },
    "note": "e45",
    "focus": "冲刺模考·整套真题限时练"
@@ -1607,7 +1793,8 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e24"
    },
    "business": null,
    "note": "e40",
@@ -1619,13 +1806,15 @@
     "chapter": "e41",
     "from": 0,
     "to": 47,
-    "note": "e41"
+    "note": "e41",
+    "noteChapter": "e25"
    },
    "business": {
     "chapter": "b14",
     "from": 0,
     "to": 89,
-    "note": "b14"
+    "note": "b14",
+    "noteChapter": "b9"
    },
    "note": "e41",
    "focus": "冲刺模考·整套真题限时练"
@@ -1636,7 +1825,8 @@
     "chapter": "e43",
     "from": 0,
     "to": 66,
-    "note": "e43"
+    "note": "e43",
+    "noteChapter": "e26"
    },
    "business": null,
    "note": "e43",
@@ -1648,13 +1838,15 @@
     "chapter": "e44",
     "from": 0,
     "to": 34,
-    "note": "e44"
+    "note": "e44",
+    "noteChapter": "e27"
    },
    "business": {
     "chapter": "b20",
     "from": 0,
     "to": 91,
-    "note": "b20"
+    "note": "b20",
+    "noteChapter": "b9"
    },
    "note": "e44",
    "focus": "冲刺模考·整套真题限时练"
@@ -1665,7 +1857,8 @@
     "chapter": "e46",
     "from": 0,
     "to": 105,
-    "note": "e46"
+    "note": "e46",
+    "noteChapter": "e28"
    },
    "business": null,
    "note": "e46",
@@ -1677,13 +1870,15 @@
     "chapter": "e47",
     "from": 0,
     "to": 105,
-    "note": "e47"
+    "note": "e47",
+    "noteChapter": "e30"
    },
    "business": {
     "chapter": "b21",
     "from": 0,
     "to": 100,
-    "note": "b21"
+    "note": "b21",
+    "noteChapter": "b10"
    },
    "note": "e47",
    "focus": "冲刺模考·整套真题限时练"
@@ -1694,7 +1889,8 @@
     "chapter": "e48",
     "from": 0,
     "to": 105,
-    "note": "e48"
+    "note": "e48",
+    "noteChapter": "e31"
    },
    "business": null,
    "note": "e48",
@@ -1706,13 +1902,15 @@
     "chapter": "e49",
     "from": 0,
     "to": 105,
-    "note": "e49"
+    "note": "e49",
+    "noteChapter": "e34"
    },
    "business": {
     "chapter": "b22",
     "from": 0,
     "to": 100,
-    "note": "b22"
+    "note": "b22",
+    "noteChapter": "b11"
    },
    "note": "e49",
    "focus": "冲刺模考·整套真题限时练"
@@ -1723,7 +1921,8 @@
     "chapter": "e38",
     "from": 0,
     "to": 87,
-    "note": "e38"
+    "note": "e38",
+    "noteChapter": "e35"
    },
    "business": null,
    "note": "e38",
@@ -1735,13 +1934,15 @@
     "chapter": "e39",
     "from": 0,
     "to": 82,
-    "note": "e39"
+    "note": "e39",
+    "noteChapter": "e36"
    },
    "business": {
     "chapter": "b12",
     "from": 0,
     "to": 76,
-    "note": "b12"
+    "note": "b12",
+    "noteChapter": "b11"
    },
    "note": "e39",
    "focus": "冲刺模考·整套真题限时练"
@@ -1752,7 +1953,8 @@
     "chapter": "e42",
     "from": 0,
     "to": 99,
-    "note": "e42"
+    "note": "e42",
+    "noteChapter": "e1"
    },
    "business": null,
    "note": "e42",
@@ -1764,13 +1966,15 @@
     "chapter": "e45",
     "from": 0,
     "to": 101,
-    "note": "e45"
+    "note": "e45",
+    "noteChapter": "e2"
    },
    "business": {
     "chapter": "b13",
     "from": 0,
     "to": 83,
-    "note": "b13"
+    "note": "b13",
+    "noteChapter": "b1"
    },
    "note": "e45",
    "focus": "冲刺模考·整套真题限时练"
@@ -1781,7 +1985,8 @@
     "chapter": "e40",
     "from": 0,
     "to": 45,
-    "note": "e40"
+    "note": "e40",
+    "noteChapter": "e3"
    },
    "business": null,
    "note": "e40",
