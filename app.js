@@ -140,6 +140,22 @@ function quizFromSession() {
 }
 function resumeQuiz() { const q = quizFromSession(); if (q) renderQuiz(); else router(); }
 function discardSession() { state.session = null; saveSession(); toast('已放弃上次进度'); router(); }
+/* 会话自愈：自动清理"孤儿会话"，避免今日页「未完成答题」横幅永久残留。
+   触发场景：中途关标签页/切设备 → session 从不被置否；导入备份或云同步只合并 wrong/progress/corrections，从不碰 session。
+   force=true 用于导入/云拉取之后（另一台设备已有新进度，本机残留会话一律作废）。
+   真正进行中的会话（idx>0 或刚建 <10 分钟）不受影响，「🔁 继续答题」照常可用。 */
+function validateSession(force) {
+  if (!state.session || !state.session.active) return false;
+  const s = state.session;
+  const kill = () => { state.session = null; saveSession(); return true; };
+  if (!Array.isArray(s.items) || !s.items.length) return kill();
+  if (s.idx >= s.items.length) return kill();                       // 已答完却没进结算页
+  const sub = (s.items[0] && s.items[0].subject) || ((s.doneKeys && s.doneKeys[0] || '').split(':')[0]);
+  if (!s.fromWrong && sub && subjectDoneToday(sub)) return kill();  // 今日该科已完成 → 旧会话必冗余
+  if (force) return kill();                                         // 导入 / 云同步之后
+  if (s.idx === 0 && s.ts && Date.now() - new Date(s.ts).getTime() > 10 * 60 * 1000) return kill(); // 开了头但零进度的孤儿
+  return false;
+}
 
 /* ---------------- 日期 / 计划 ---------------- */
 function localToday() { const d = new Date(); const off = d.getTimezoneOffset(); return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10); }
@@ -208,43 +224,112 @@ function markStudy(chapterKey) {
   saveProgress();
 }
 
-/* ---------------- GitHub 同步 ---------------- */
+/* ---------------- 云同步：GitHub / Gitee 双通道 ---------------- */
 function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
 function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
-async function githubSave() {
+function syncPayload() {
+  return { wrong: state.wrong, progress: state.progress, corrections: state.corrections, updatedAt: new Date().toISOString() };
+}
+/* 拉取成功后统一的合并落盘（两个平台共用） */
+async function applyCloudPayload(payload, who) {
+  state.wrong = mergeWrong(payload.wrong, state.wrong);
+  state.progress = mergeProgress(payload.progress, state.progress);
+  state.corrections = mergeCorrections(payload.corrections, state.corrections);
+  await saveWrong(); await saveProgress(); await saveCorrections();
+  validateSession(true);   // 另一台设备已有新进度，本机残留会话作废
+  state.settings.lastSync = new Date().toISOString(); await saveSettings();
+  toast(`已从 ${who} 拉取并合并 ✅（不会覆盖本机新数据）`); router();
+}
+
+async function githubSave(silent) {
   const s = state.settings;
-  if (!s.token || !s.repo) { toast('请先在设置填写 Token 和仓库'); return; }
-  const payload = { wrong: state.wrong, progress: state.progress, corrections: state.corrections, updatedAt: new Date().toISOString() };
+  if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 和仓库'); return; }
   const path = s.path || 'data/user-data.json';
   const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
   let sha;
   try { const r = await fetch(url, { headers: { Authorization: 'token ' + s.token } }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
-  const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(payload, null, 2)), ...(sha ? { sha } : {}) };
-  const r = await fetch(url, { method: 'PUT', headers: { Authorization: 'token ' + s.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); toast('已同步到 GitHub ✅'); }
-  else toast('同步失败：' + r.status + '（检查 Token/仓库/路径）');
+  const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(syncPayload(), null, 2)), ...(sha ? { sha } : {}) };
+  try {
+    const r = await fetch(url, { method: 'PUT', headers: { Authorization: 'token ' + s.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 GitHub ✅'); }
+    else toast('GitHub 同步失败：' + r.status + '（检查 Token/仓库/路径）');
+  } catch (e) { toast('GitHub 同步失败：' + e.message); }
 }
 async function githubLoad() {
   const s = state.settings;
-  if (!s.token || !s.repo) { toast('请先填写 Token 和仓库'); return; }
+  if (!s.token || !s.repo) { toast('请先填写 GitHub Token 和仓库'); return; }
   const path = s.path || 'data/user-data.json';
   const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
   try {
     const r = await fetch(url, { headers: { Authorization: 'token ' + s.token } });
+    if (r.status === 404) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
     if (!r.ok) { toast('拉取失败：' + r.status); return; }
     const j = await r.json();
-    const payload = JSON.parse(b64decode(j.content));
-    state.wrong = mergeWrong(payload.wrong, state.wrong);
-    state.progress = mergeProgress(payload.progress, state.progress);
-    state.corrections = mergeCorrections(payload.corrections, state.corrections);
-    await saveWrong(); await saveProgress(); await saveCorrections();
-    toast('已从 GitHub 拉取并合并 ✅（不会覆盖本机新数据）'); router();
+    await applyCloudPayload(JSON.parse(b64decode(j.content)), 'GitHub');
   } catch (e) { toast('拉取失败：' + e.message); }
 }
+
+/* Gitee（码云）：国内直连，单位网络可用。令牌只需勾选 projects 权限。
+   与 GitHub 的差异：鉴权用 Bearer / access_token；新建文件用 POST、更新用 PUT；
+   sha 过期或文件已存在时 Gitee 会回 400/409/422 —— 重拉 sha 再 PUT 兜底。
+   GET 一律用 ?access_token= 查询串（简单请求，免 CORS 预检，最稳）。 */
+function giteeCfg() {
+  const s = state.settings;
+  return { token: (s.giteeToken || '').trim(), repo: (s.giteeRepo || '').trim(), path: (s.giteePath || 'user-data.json').trim() };
+}
+function giteeUrl(c) { return `https://gitee.com/api/v5/repos/${c.repo}/contents/${c.path}`; }
+async function giteeGet(c) {
+  const r = await fetch(`${giteeUrl(c)}?access_token=${encodeURIComponent(c.token)}`);
+  if (!r.ok) return { status: r.status };
+  const j = await r.json();
+  return { status: 200, json: Array.isArray(j) ? null : j };
+}
+async function giteeSave(silent) {
+  const c = giteeCfg();
+  if (!c.token || !c.repo) { toast('请先在设置填写 Gitee 令牌和仓库'); return; }
+  const content = b64encode(JSON.stringify(syncPayload(), null, 2));
+  const send = (sha) => fetch(giteeUrl(c), {
+    method: sha ? 'PUT' : 'POST',
+    headers: { Authorization: 'Bearer ' + c.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_token: c.token, content, message: 'sync econ study data', ...(sha ? { sha } : {}) })
+  });
+  try {
+    const cur = await giteeGet(c);
+    let sha = (cur.status === 200 && cur.json) ? cur.json.sha : null;
+    let r = await send(sha);
+    if (!r.ok && [400, 409, 422].indexOf(r.status) >= 0) {   // sha 冲突 / 文件已存在 → 重拉 sha 再 PUT
+      const again = await giteeGet(c);
+      const sha2 = (again.status === 200 && again.json) ? again.json.sha : null;
+      if (sha2) r = await send(sha2);
+    }
+    if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); }
+    else { let t = ''; try { t = (await r.text()).slice(0, 100); } catch (e) {} toast('Gitee 同步失败：' + r.status + ' ' + t); }
+  } catch (e) { toast('Gitee 同步失败：' + e.message); }
+}
+async function giteeLoad() {
+  const c = giteeCfg();
+  if (!c.token || !c.repo) { toast('请先填写 Gitee 令牌和仓库'); return; }
+  try {
+    const cur = await giteeGet(c);
+    if (cur.status === 404) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
+    if (cur.status !== 200 || !cur.json || !cur.json.content) { toast('Gitee 拉取失败：' + cur.status + '（检查令牌/仓库/路径）'); return; }
+    await applyCloudPayload(JSON.parse(b64decode(cur.json.content)), 'Gitee');
+  } catch (e) { toast('Gitee 拉取失败：' + e.message); }
+}
+
+/* 平台路由：设置里的「同步方式」决定走哪条通道 */
+function cloudProvider() { return state.settings.provider === 'gitee' ? 'gitee' : 'github'; }
+function cloudName() { return cloudProvider() === 'gitee' ? 'Gitee' : 'GitHub'; }
+function cloudReady() {
+  const s = state.settings;
+  return cloudProvider() === 'gitee' ? !!(s.giteeToken && s.giteeRepo) : !!(s.token && s.repo);
+}
+async function cloudSave(silent) { return cloudProvider() === 'gitee' ? giteeSave(silent) : githubSave(silent); }
+async function cloudLoad() { return cloudProvider() === 'gitee' ? giteeLoad() : githubLoad(); }
 function scheduleSync() {
-  if (!state.settings.auto || !state.settings.token) return;
+  if (!state.settings.auto || !cloudReady()) return;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(githubSave, 15000);
+  syncTimer = setTimeout(() => cloudSave(true), 15000);   // 静默上传：成功不打扰，失败才提示
 }
 /* ---------------- 题库订正推送（patches.json 覆盖层） ---------------- */
 async function pushPatchesToRepo(extra) {
@@ -302,6 +387,7 @@ window.nav = nav;
 
 /* ---------------- 视图：今日任务 ---------------- */
 function renderToday() {
+  validateSession(false);   // 进今日页先净化孤儿会话，避免「未完成答题」横幅误报
   const t = todaysChapters();
   let banner;
   if (t.notStarted) banner = `<div class="banner">📅 计划还未开始，距开始还有 ${-t.days} 天（${DATA.plan.startDate}）。</div>`;
@@ -776,28 +862,46 @@ function renderProgress() {
 function renderSettings() {
   const s = state.settings;
   const last = s.lastSync ? new Date(s.lastSync).toLocaleString() : '从未';
+  const prov = cloudProvider();
   app.innerHTML = `<div class="card">
-    <h2>设置 · GitHub 云同步</h2>
-    <p class="muted">错题、进度、AI 修正默认存浏览器本地（IndexedDB）。填写以下信息后，数据会自动备份到你指定的 GitHub 仓库（<b>data/user-data.json</b>）。</p>
-    <label>GitHub Token（建议用 fine-grained，仅授权本题库仓库的 Contents 读写）</label>
-    <input id="tok" type="password" placeholder="ghp_xxx 或 github_pat_xxx" value="${s.token || ''}">
-    <label>仓库（格式 owner/repo）</label>
-    <input id="repo" placeholder="yourname/econ-questions" value="${s.repo || ''}">
-    <label>分支</label>
-    <input id="branch" placeholder="main" value="${s.branch || 'main'}">
-    <label>数据文件路径</label>
-    <input id="path" placeholder="data/user-data.json" value="${s.path || 'data/user-data.json'}">
-    <label><input type="checkbox" id="auto" ${s.auto ? 'checked' : ''}> 自动同步（每次变动 15 秒后静默备份）</label>
+    <h2>设置 · 云同步（GitHub / Gitee）</h2>
+    <p class="muted">错题、进度、AI 修正默认存浏览器本地（IndexedDB）。选择同步方式后，这三类数据会备份到你指定的云端仓库，实现「单位 ↔ 家」自动同步，无需再手动导出/导入 JSON。</p>
+    <label>同步方式</label>
+    <select id="prov" onchange="onProvChange()">
+      <option value="github" ${prov === 'github' ? 'selected' : ''}>GitHub（家里网络可用）</option>
+      <option value="gitee" ${prov === 'gitee' ? 'selected' : ''}>Gitee 码云（国内直连 · 单位可用）</option>
+    </select>
+    <div class="note" style="margin-top:12px;white-space:normal">
+      <b>① GitHub</b>　<span class="muted">（Token 同时用于「推送订正到题库」，建议始终填写）</span>
+      <label>GitHub Token（建议用 fine-grained，仅授权本题库仓库的 Contents 读写）</label>
+      <input id="tok" type="password" placeholder="ghp_xxx 或 github_pat_xxx" value="${s.token || ''}">
+      <label>仓库（格式 owner/repo）</label>
+      <input id="repo" placeholder="homjanon/jingjishi" value="${s.repo || ''}">
+      <label>分支</label>
+      <input id="branch" placeholder="main" value="${s.branch || 'main'}">
+      <label>数据文件路径</label>
+      <input id="path" placeholder="data/user-data.json" value="${s.path || 'data/user-data.json'}">
+    </div>
+    <div class="note" style="margin-top:10px;white-space:normal">
+      <b>② Gitee 码云</b>　<span class="muted">（私人令牌只需勾选 <b>projects</b> 权限；建议用<b>私有仓</b>，数据不公开）</span>
+      <label>Gitee 私人令牌</label>
+      <input id="gtok" type="password" placeholder="Gitee 私人令牌" value="${s.giteeToken || ''}">
+      <label>Gitee 仓库（格式 owner/repo）</label>
+      <input id="grepo" placeholder="homjanon/jingjishidata" value="${s.giteeRepo || ''}">
+      <label>数据文件路径（使用仓库默认分支）</label>
+      <input id="gpath" placeholder="user-data.json" value="${s.giteePath || 'user-data.json'}">
+    </div>
+    <label style="margin-top:12px"><input type="checkbox" id="auto" ${s.auto ? 'checked' : ''}> 自动同步（数据变动 15 秒后静默上传到<b id="autoProv">${cloudName()}</b>，成功不打扰、失败才提示）</label>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="saveSet()">保存设置</button>
-      <button class="btn g" onclick="ghSave()">立即同步到 GitHub</button>
-      <button class="btn ghost" onclick="ghLoad()">从 GitHub 拉取</button>
+      <button class="btn g" onclick="cloudSaveBtn()">☁️ 同步到云端（<span id="btnUp">${cloudName()}</span>）</button>
+      <button class="btn ghost" onclick="cloudLoadBtn()">📥 从云端拉取（<span id="btnDown">${cloudName()}</span>）</button>
     </div>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn ghost" onclick="exportBackup()">⬇ 导出备份（下载JSON）</button>
       <label class="btn ghost" style="cursor:pointer;margin:0">⬆ 导入备份<input id="imp" type="file" accept="application/json" style="display:none" onchange="importBackup(this)"></label>
     </div>
-    <p class="muted" style="margin-top:8px">⚠️ 若你的网络无法访问 api.github.com，GitHub 云同步会失败；请用「导出/导入备份」做本地备份，效果一样且不依赖网络。</p>
+    <p class="muted" style="margin-top:8px">💡 推荐用法：<b>单位选 Gitee</b>（国内直连不需代理），做完题点「同步到云端」；<b>回家点「从云端拉取」</b>合并，再按需「批量推送订正到题库」写回 GitHub。两平台数据格式一致，可随时切换；导出/导入备份始终可用作离线兜底。</p>
     <p class="muted" style="margin-top:10px">上次同步：${last}</p>
     <div class="note" style="margin-top:12px">
       <label style="margin:0 0 4px"><input type="checkbox" id="aic" ${s.aiCorrect === false ? '' : 'checked'}> 启用 <b>AI 自动修正</b>（精讲后自动补全/修正本题解析与答案）</label>
@@ -813,16 +917,31 @@ function renderSettings() {
   if (pv) { pv.addEventListener('change', loadAIKeyInput); loadAIKeyInput(); }
 }
 window.saveSet = async function () {
-  state.settings.token = document.getElementById('tok').value.trim();
-  state.settings.repo = document.getElementById('repo').value.trim();
-  state.settings.branch = document.getElementById('branch').value.trim() || 'main';
-  state.settings.path = document.getElementById('path').value.trim() || 'data/user-data.json';
+  const val = (id, d) => { const el = document.getElementById(id); return el ? (el.value.trim() || d || '') : (d || ''); };
+  state.settings.provider = val('prov', 'github') === 'gitee' ? 'gitee' : 'github';
+  state.settings.token = val('tok');
+  state.settings.repo = val('repo');
+  state.settings.branch = val('branch', 'main');
+  state.settings.path = val('path', 'data/user-data.json');
+  state.settings.giteeToken = val('gtok');
+  state.settings.giteeRepo = val('grepo');
+  state.settings.giteePath = val('gpath', 'user-data.json');
   state.settings.auto = document.getElementById('auto').checked;
   state.settings.aiCorrect = document.getElementById('aic').checked;
   await saveSettings();
-  toast('设置已保存');
+  toast('设置已保存（当前同步方式：' + cloudName() + '）');
 };
-window.ghSave = githubSave;
+/* 下拉切换即时生效：无需先点保存，按钮文案同步更新 */
+window.onProvChange = async function () {
+  const el = document.getElementById('prov');
+  state.settings.provider = el && el.value === 'gitee' ? 'gitee' : 'github';
+  await saveSettings();
+  ['btnUp', 'btnDown', 'autoProv'].forEach(id => { const n = document.getElementById(id); if (n) n.textContent = cloudName(); });
+  toast('同步方式已切换为 ' + cloudName());
+};
+window.cloudSaveBtn = function () { cloudSave(false); };
+window.cloudLoadBtn = function () { cloudLoad(); };
+window.ghSave = function () { githubSave(false); };
 window.ghLoad = githubLoad;
 window.exportBackup = function () {
   const payload = { wrong: state.wrong, progress: state.progress, corrections: state.corrections, exportedAt: new Date().toISOString() };
@@ -890,6 +1009,7 @@ window.importBackup = function (input) {
     state.progress = mergeProgress(p.progress, state.progress);
     state.corrections = mergeCorrections(p.corrections, state.corrections);
     saveWrong(); saveProgress(); saveCorrections();
+    validateSession(true);   // 导入后清掉本机残留会话（数据已来自另一台设备）
     toast(`已合并导入 ✅（错题 ${nW} 道 / 进度 ${nP} 条 / 订正 ${nC} 条，已与本机数据合并）`);
     router();
   } catch (e) { toast('导入失败：' + e.message); } };
@@ -1140,5 +1260,6 @@ window.discardSession = discardSession;
   catch (err) { app.innerHTML = `<div class="card empty">⚠️ 数据加载失败。<br>请用本地服务器访问（如 <code>python -m http.server</code>），或直接部署到 GitHub Pages，<br>不能用 file:// 直接打开。</div>`; return; }
   await loadState();
   migrateWrong();
+  validateSession(false);   // 启动即自愈：清理上次遗留的孤儿会话
   router();
 })();
