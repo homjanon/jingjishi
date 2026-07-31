@@ -41,6 +41,7 @@ h3{font-size:15px;margin:14px 0 6px;}
 .stat .box b{display:block;font-size:22px;color:var(--blue-d);}
 label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;}
 input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;}
+select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;}
 .note{background:var(--amber-l);border:1px solid #ffe0b0;border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px;white-space:pre-wrap;}
 .plan-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
 .plan-row:last-child{border-bottom:none;}
