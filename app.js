@@ -246,14 +246,21 @@ async function githubSave(silent) {
   if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 和仓库'); return; }
   const path = s.path || 'data/user-data.json';
   const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
-  let sha;
-  try { const r = await fetch(url, { headers: { Authorization: 'token ' + s.token } }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
-  const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(syncPayload(), null, 2)), ...(sha ? { sha } : {}) };
-  try {
-    const r = await fetch(url, { method: 'PUT', headers: { Authorization: 'token ' + s.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 GitHub ✅'); }
-    else toast('GitHub 同步失败：' + r.status + '（检查 Token/仓库/路径）');
-  } catch (e) { toast('GitHub 同步失败：' + e.message); }
+  const auth = { Authorization: 'token ' + s.token };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let sha;
+    try { const r = await fetch(url, { headers: auth }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
+    const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(syncPayload(), null, 2)), ...(sha ? { sha } : {}) };
+    try {
+      const r = await fetch(url, { method: 'PUT', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 GitHub ✅'); return; }
+      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
+      toast('GitHub 同步失败：' + r.status + '（检查 Token/仓库/路径）'); return;
+    } catch (e) {
+      if (attempt < 2) continue;
+      toast('GitHub 同步失败：' + e.message); return;
+    }
+  }
 }
 async function githubLoad() {
   const s = state.settings;
@@ -288,23 +295,31 @@ async function giteeSave(silent) {
   const c = giteeCfg();
   if (!c.token || !c.repo) { toast('请先在设置填写 Gitee 令牌和仓库'); return; }
   const content = b64encode(JSON.stringify(syncPayload(), null, 2));
-  const send = (sha) => fetch(giteeUrl(c), {
-    method: sha ? 'PUT' : 'POST',
-    headers: { Authorization: 'Bearer ' + c.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ access_token: c.token, content, message: 'sync econ study data', ...(sha ? { sha } : {}) })
-  });
-  try {
-    const cur = await giteeGet(c);
-    let sha = (cur.status === 200 && cur.json) ? cur.json.sha : null;
-    let r = await send(sha);
-    if (!r.ok && [400, 409, 422].indexOf(r.status) >= 0) {   // sha 冲突 / 文件已存在 → 重拉 sha 再 PUT
-      const again = await giteeGet(c);
-      const sha2 = (again.status === 200 && again.json) ? again.json.sha : null;
-      if (sha2) r = await send(sha2);
+  const url = giteeUrl(c);
+  const authHeader = 'Bearer ' + c.token;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let sha = null;
+    try {
+      // GET 优先用 access_token 查询串（免预检），不行就换 Bearer 头
+      let r = await fetch(url + '?access_token=' + encodeURIComponent(c.token));
+      if (!r.ok) r = await fetch(url, { headers: { Authorization: authHeader } });
+      if (r.ok) { const j = await r.json(); if (!Array.isArray(j)) sha = j.sha; }
+    } catch (e) { /* 重试会重新获取 */ }
+    try {
+      const r = await fetch(url, {
+        method: sha ? 'PUT' : 'POST',
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: c.token, content, message: 'sync econ study data', ...(sha ? { sha } : {}) })
+      });
+      if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); return; }
+      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
+      let t = ''; try { t = (await r.text()).slice(0, 100); } catch (e) {}
+      toast('Gitee 同步失败：' + r.status + ' ' + t); return;
+    } catch (e) {
+      if (attempt < 2) continue;
+      toast('Gitee 同步失败：' + e.message); return;
     }
-    if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); }
-    else { let t = ''; try { t = (await r.text()).slice(0, 100); } catch (e) {} toast('Gitee 同步失败：' + r.status + ' ' + t); }
-  } catch (e) { toast('Gitee 同步失败：' + e.message); }
+  }
 }
 async function giteeLoad() {
   const c = giteeCfg();
@@ -337,18 +352,25 @@ async function pushPatchesToRepo(extra) {
   if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 与仓库'); return; }
   const path = 'data/patches.json';
   const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
-  let sha, cur = {};
-  try {
-    const r = await fetch(url, { headers: { Authorization: 'token ' + s.token } });
-    if (r.ok) { const j = await r.json(); sha = j.sha; try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
-  } catch (e) { /* 文件可能还不存在，忽略 */ }
-  Object.assign(cur, extra);
-  const body = { message: 'add question patches', content: b64encode(JSON.stringify(cur, null, 2)), ...(sha ? { sha } : {}) };
-  try {
-    const r = await fetch(url, { method: 'PUT', headers: { Authorization: 'token ' + s.token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (r.ok) toast('已推送到题库 ✅（下次打开站点即生效）');
-    else toast('推送失败：' + r.status + '（检查 Token/仓库）');
-  } catch (e) { toast('推送失败：' + e.message); }
+  const auth = { Authorization: 'token ' + s.token };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let sha, cur = {};
+    try {
+      const r = await fetch(url, { headers: auth });
+      if (r.ok) { const j = await r.json(); sha = j.sha; try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
+    } catch (e) { /* 文件可能还不存在，忽略 */ }
+    Object.assign(cur, extra);
+    const body = { message: 'add question patches', content: b64encode(JSON.stringify(cur, null, 2)), ...(sha ? { sha } : {}) };
+    try {
+      const r = await fetch(url, { method: 'PUT', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (r.ok) { toast('已推送到题库 ✅（下次打开站点即生效）'); return; }
+      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
+      toast('推送失败：' + r.status + '（检查 Token/仓库）'); return;
+    } catch (e) {
+      if (attempt < 2) continue;
+      toast('推送失败：' + e.message); return;
+    }
+  }
 }
 function pushOnePatch(qid) {
   const c = state.corrections[qid];
