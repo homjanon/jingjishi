@@ -491,15 +491,35 @@ function startAll() {
   sessionFromQueue(queue, '今日全部', false, doneKeys, true);
   renderQuiz();
 }
+/* ---------------- 题型工具 ----------------
+   历史数据里多选写法有 multiple / multi 两种（2026-08-01 已归一化为 multiple），
+   这里仍用白名单兜底，避免任何一处判定漏掉某种写法导致多选被当单选渲染。 */
+const MULTI_TYPES = new Set(['multiple', 'multi', 'case', '多选']);
+function isMulti(t) { return MULTI_TYPES.has(String(t == null ? '' : t).trim().toLowerCase()); }
+function typeBadge(t) {
+  return isMulti(t)
+    ? `<span class="tbadge multi">多选题 · 至少 2 项 · 错选不得分</span>`
+    : `<span class="tbadge single">单选题</span>`;
+}
+function submitLabel(t, n, base) {
+  base = base || '提交答案';
+  if (!isMulti(t) || n === 0) return base;
+  return n === 1 ? `${base}（仅选 1 项 ⚠️）` : `${base}（已选 ${n} 项）`;
+}
+function optHtml(options, t) {
+  const cls = isMulti(t) ? 'opt multi' : 'opt';
+  return options.map((o, i) => `<button class="${cls}" data-i="${i}">${esc(o)}</button>`).join('');
+}
+
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
   sel = new Set();
   const { q } = quiz.queue[quiz.idx];
-  const opts = q.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join('');
+  const opts = optHtml(q.options, q.type);
   const corrBadge = q._corrected ? `<span class="pill a">⚠️AI修正答案</span>` : '';
   app.innerHTML = `<div class="card">
     <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${quiz.idx + 1}/${quiz.queue.length}</span></div>
-    <div class="q"><div class="stem">${esc(q.stem)}</div>${opts}
+    <div class="q"><div class="qtype">${typeBadge(q.type)}${corrBadge}</div><div class="stem">${esc(q.stem)}</div>${opts}
       <button class="btn g" id="submitBtn" disabled>提交答案</button>
       <div class="explain" id="explain"></div>
       <div id="aiBox" style="margin-top:10px"></div>
@@ -512,7 +532,7 @@ function renderQuiz() {
 function onPick(b, q) {
   if (document.getElementById('explain').classList.contains('show')) return;
   const submitBtn = document.getElementById('submitBtn');
-  if (q.type === 'single') {
+  if (!isMulti(q.type)) {
     app.querySelectorAll('.opt').forEach(x => x.classList.remove('sel'));
     b.classList.add('sel'); sel = new Set([+b.dataset.i]); submitBtn.disabled = false;
   } else {
@@ -520,6 +540,7 @@ function onPick(b, q) {
     if (b.classList.contains('sel')) sel.add(+b.dataset.i); else sel.delete(+b.dataset.i);
     submitBtn.disabled = sel.size === 0;
   }
+  submitBtn.textContent = submitLabel(q.type, sel.size);
 }
 function onSubmit(q) {
   const correct = [...sel].map(i => q.options[i][0]).sort().join('') === q.answer.slice().sort().join('');
@@ -630,8 +651,8 @@ function redoWrong(qid) {
   const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
   const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
-    <div class="q"><div class="stem">${esc(q.stem)}</div>
-    ${q.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}
+    <div class="q"><div class="qtype">${typeBadge(q.type)}</div><div class="stem">${esc(q.stem)}</div>
+    ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
     <div class="explain" id="redoExplain"></div></div>
     <div id="redoNav" style="margin-top:10px"></div></div>`;
@@ -639,7 +660,7 @@ function redoWrong(qid) {
   const optEls = app.querySelectorAll('.opt');
   optEls.forEach(b => b.onclick = () => {
     if (document.getElementById('redoExplain').classList.contains('show')) return;
-    if (q.type === 'single') {
+    if (!isMulti(q.type)) {
       optEls.forEach(x => x.classList.remove('sel'));
       b.classList.add('sel'); rsel = new Set([+b.dataset.i]);
       document.getElementById('redoSubmit').disabled = false;
@@ -648,6 +669,7 @@ function redoWrong(qid) {
       if (b.classList.contains('sel')) rsel.add(+b.dataset.i); else rsel.delete(+b.dataset.i);
       document.getElementById('redoSubmit').disabled = rsel.size === 0;
     }
+    document.getElementById('redoSubmit').textContent = submitLabel(q.type, rsel.size, '提交');
   });
   document.getElementById('redoSubmit').onclick = () => {
     const correct = [...rsel].map(i => q.options[i][0]).sort().join('') === q.answer.slice().sort().join('');
@@ -1170,8 +1192,8 @@ function aiSimilarBtn(qid) {
   });
 }
 function renderSimilarQuiz(body, data, qid) {
-  const opts = (data.options || []).map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join("");
-  body.innerHTML = `<div class="q"><div class="stem">${esc(data.stem)}</div>${opts}<button class="btn g" id="simSubmit" disabled>提交</button><div class="explain" id="simExpl"></div></div>
+  const opts = optHtml(data.options || [], data.type);
+  body.innerHTML = `<div class="q"><div class="qtype">${typeBadge(data.type)}</div><div class="stem">${esc(data.stem)}</div>${opts}<button class="btn g" id="simSubmit" disabled>提交</button><div class="explain" id="simExpl"></div></div>
     <div class="ai-foot">
       <button class="btn ghost" onclick="aiSimilarBtn('${qid}')">🔄 换一道</button>
       <button class="btn" onclick="replaceOriginal('${qid}')">📥 用此题替换原题</button>
@@ -1181,8 +1203,9 @@ function renderSimilarQuiz(body, data, qid) {
   const root = body;
   root.querySelectorAll(".opt").forEach(b => b.onclick = () => {
     if (root.querySelector("#simExpl").classList.contains("show")) return;
-    if (data.type === "single") { root.querySelectorAll(".opt").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); ssel = new Set([+b.dataset.i]); root.querySelector("#simSubmit").disabled = false; }
+    if (!isMulti(data.type)) { root.querySelectorAll(".opt").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); ssel = new Set([+b.dataset.i]); root.querySelector("#simSubmit").disabled = false; }
     else { b.classList.toggle("sel"); if (b.classList.contains("sel")) ssel.add(+b.dataset.i); else ssel.delete(+b.dataset.i); root.querySelector("#simSubmit").disabled = ssel.size === 0; }
+    root.querySelector("#simSubmit").textContent = submitLabel(data.type, ssel.size, "提交");
   });
   root.querySelector("#simSubmit").onclick = () => {
     const correct = [...ssel].map(i => data.options[i][0]).sort().join("") === data.answer.slice().sort().join("");
