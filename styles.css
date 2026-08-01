@@ -34,6 +34,14 @@ h3{font-size:15px;margin:14px 0 6px;}
 .opt.correct{background:var(--green-l);border-color:var(--green);color:var(--green-d);}
 .opt.wrong{background:#FCEBEB;border-color:var(--red);color:var(--red);}
 .opt.dim{opacity:.55;}
+/* 多选题：方框标记，与单选的 ✓ 圆点感区分（写在 .opt.sel::before 之后以覆盖） */
+.opt.multi::before{content:"☐ ";font-weight:700;color:#b3b9c2;}
+.opt.multi.sel::before{content:"☑ ";color:var(--blue);}
+/* 题型徽章 */
+.qtype{margin-bottom:8px;}
+.tbadge{display:inline-block;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:600;margin-right:6px;letter-spacing:.2px;}
+.tbadge.single{background:#eef0f3;color:#5a6472;}
+.tbadge.multi{background:var(--amber-l);color:var(--amber-d);border:1px solid #ffd8a8;}
 .explain{background:var(--blue-l);border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px;display:none;}
 .explain.show{display:block;}
 .stat{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;}
