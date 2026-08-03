@@ -55,17 +55,31 @@ function findChapter(subject, cid) {
 }
 
 /* ---------------- 修正覆盖层（repo patches + 本地 corrections） ---------------- */
+/* answer 规范化：兼容历史脏数据（字符串 "D" / 数组 ["D"] / "AC" / "A、C"） */
+function normAnswer(a) {
+  if (Array.isArray(a)) return a.map(x => String(x).trim()).filter(Boolean);
+  if (typeof a === 'string') {
+    const t = a.trim();
+    if (!t) return [];
+    if (/^[A-Za-z]+$/.test(t)) return t.split('');           // "AC" → ["A","C"]
+    return t.split(/[、,，\s]+/).map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
 function applyCorrections(q) {
   if (!q || !q.id) return q;
   let out = q;
   // 1) 官方订正库（patches.json，站点启动加载，对所有人生效）
   if (DATA.patches && DATA.patches[q.id]) {
     const p = DATA.patches[q.id];
+    const okOpts = Array.isArray(p.options) && p.options.length >= 2 && p.options.every(o => typeof o === 'string' && o.trim().length > 0);
+    const nAns = normAnswer(p.answer);
+    const trustAns = nAns.length && (p.options == null || okOpts);
     out = Object.assign({}, out, {
-      stem: p.stem != null ? p.stem : out.stem,
+      stem: (typeof p.stem === 'string' && p.stem.trim()) ? p.stem : out.stem,
       type: p.type != null ? p.type : out.type,
-      options: p.options != null ? p.options : out.options,
-      answer: p.answer != null ? p.answer : out.answer,
+      options: okOpts ? p.options : out.options,
+      answer: trustAns ? nAns : out.answer,
       explanation: p.explanation != null ? p.explanation : out.explanation,
       _patched: !!p.corrected
     });
@@ -74,12 +88,17 @@ function applyCorrections(q) {
   if (state.settings.aiCorrect === false) return out;
   const c = state.corrections[q.id];
   if (!c) return out;
+  // 防御：options 必须是 ≥2 个完整选项的数组才覆盖，防止 AI 把答案字母当成选项数组
+  const okOpts = Array.isArray(c.options) && c.options.length >= 2 && c.options.every(o => typeof o === 'string' && o.trim().length > 0);
+  const nAns = normAnswer(c.answer);
+  // 订正若携带畸形 options（同一次 AI 误判），answer 一并回退原题，避免只改答案不改选项导致错乱
+  const trustAns = nAns.length && (c.options == null || okOpts);
   return Object.assign({}, out, {
-    stem: c.stem != null ? c.stem : out.stem,
+    stem: (typeof c.stem === 'string' && c.stem.trim()) ? c.stem : out.stem,
     type: c.type != null ? c.type : out.type,
     explanation: c.explanation != null ? c.explanation : out.explanation,
-    answer: c.answer != null ? c.answer : out.answer,
-    options: c.options != null ? c.options : out.options,
+    answer: trustAns ? nAns : out.answer,
+    options: okOpts ? c.options : out.options,
     ai_explain: c.ai_explain, mnemonic: c.mnemonic, pitfall: c.pitfall,
     _corrected: !!c.corrected || !!out._patched
   });
@@ -93,8 +112,12 @@ function saveCorrection(qid, d) {
   c.explanation = d.explain || c.explanation;            // 用 AI 解析替换空白/错误源解析
   if (d.sourceWrong) {                                    // 仅当 AI 判定源答案有误才覆盖答案
     c.corrected = true;
-    if (d.correctAnswer) c.answer = d.correctAnswer;
-    if (d.correctOptions) c.options = d.correctOptions;
+    const nAns = normAnswer(d.correctAnswer);
+    if (nAns.length) c.answer = nAns;
+    // correctOptions 必须是 ≥2 个完整选项数组才写入，AI 只给了答案字母就放弃覆盖选项
+    if (Array.isArray(d.correctOptions) && d.correctOptions.length >= 2 && d.correctOptions.every(o => typeof o === 'string' && o.trim().length > 0)) {
+      c.options = d.correctOptions;
+    }
   }
   c.ts = new Date().toISOString();
   state.corrections[qid] = c;
@@ -249,7 +272,7 @@ async function githubSave(silent) {
   const auth = { Authorization: 'token ' + s.token };
   for (let attempt = 0; attempt < 3; attempt++) {
     let sha;
-    try { const r = await fetch(url, { headers: auth }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
+    try { const r = await fetch(url, { headers: auth, cache: 'no-store' }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
     const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(syncPayload(), null, 2)), ...(sha ? { sha } : {}) };
     try {
       const r = await fetch(url, { method: 'PUT', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -286,7 +309,8 @@ function giteeCfg() {
 }
 function giteeUrl(c) { return `https://gitee.com/api/v5/repos/${c.repo}/contents/${c.path}`; }
 async function giteeGet(c) {
-  const r = await fetch(`${giteeUrl(c)}?access_token=${encodeURIComponent(c.token)}`);
+  // cache:'no-store' 防浏览器 HTTP 缓存返回旧 sha（Gitee 响应无 no-cache 头，会命中缓存导致 PUT 400）
+  const r = await fetch(`${giteeUrl(c)}?access_token=${encodeURIComponent(c.token)}`, { cache: 'no-store' });
   if (!r.ok) return { status: r.status };
   const j = await r.json();
   return { status: 200, json: Array.isArray(j) ? null : j };
@@ -300,9 +324,9 @@ async function giteeSave(silent) {
   for (let attempt = 0; attempt < 3; attempt++) {
     let sha = null;
     try {
-      // GET 优先用 access_token 查询串（免预检），不行就换 Bearer 头
-      let r = await fetch(url + '?access_token=' + encodeURIComponent(c.token));
-      if (!r.ok) r = await fetch(url, { headers: { Authorization: authHeader } });
+      // GET 优先用 access_token 查询串（免预检），不行就换 Bearer 头；no-store 防缓存旧 sha
+      let r = await fetch(url + '?access_token=' + encodeURIComponent(c.token), { cache: 'no-store' });
+      if (!r.ok) r = await fetch(url, { headers: { Authorization: authHeader }, cache: 'no-store' });
       if (r.ok) { const j = await r.json(); if (!Array.isArray(j)) sha = j.sha; }
     } catch (e) { /* 重试会重新获取 */ }
     try {
@@ -356,7 +380,7 @@ async function pushPatchesToRepo(extra) {
   for (let attempt = 0; attempt < 3; attempt++) {
     let sha, cur = {};
     try {
-      const r = await fetch(url, { headers: auth });
+      const r = await fetch(url, { headers: auth, cache: 'no-store' });
       if (r.ok) { const j = await r.json(); sha = j.sha; try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
     } catch (e) { /* 文件可能还不存在，忽略 */ }
     Object.assign(cur, extra);
@@ -565,7 +589,7 @@ function onPick(b, q) {
   submitBtn.textContent = submitLabel(q.type, sel.size);
 }
 function onSubmit(q) {
-  const correct = [...sel].map(i => q.options[i][0]).sort().join('') === q.answer.slice().sort().join('');
+  const correct = [...sel].map(i => q.options[i][0]).sort().join('') === normAnswer(q.answer).slice().sort().join('');
   const explain = document.getElementById('explain');
   app.querySelectorAll('.opt').forEach((b, i) => {
     const letter = q.options[i][0];
@@ -574,7 +598,7 @@ function onSubmit(q) {
     else b.classList.add('dim');
     b.disabled = true;
   });
-  explain.innerHTML = `<b>答案：</b>${q.answer.join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
+  explain.innerHTML = `<b>答案：</b>${normAnswer(q.answer).join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
   explain.classList.add('show');
   document.getElementById('submitBtn').style.display = 'none';
   const item = quiz.queue[quiz.idx];
@@ -585,7 +609,7 @@ function onSubmit(q) {
     if (correct) quiz.correct++;
     else {
       quiz.wrong++;
-      addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, options: q.options, type: q.type, explanation: q.explanation, answer: q.answer.join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
+      addWrong({ qid: q.id, subject: item.subject, chapterId: item.chapterId, chapterTitle: item.chapterTitle, stem: q.stem, options: q.options, type: q.type, explanation: q.explanation, answer: normAnswer(q.answer).join('、'), yourWrong: [...sel].map(i => q.options[i][0]).join('、') });
     }
   }
   if (state.session) { state.session.correct = quiz.correct; state.session.wrong = quiz.wrong; saveSession(); }
@@ -694,7 +718,7 @@ function redoWrong(qid) {
     document.getElementById('redoSubmit').textContent = submitLabel(q.type, rsel.size, '提交');
   });
   document.getElementById('redoSubmit').onclick = () => {
-    const correct = [...rsel].map(i => q.options[i][0]).sort().join('') === q.answer.slice().sort().join('');
+    const correct = [...rsel].map(i => q.options[i][0]).sort().join('') === normAnswer(q.answer).slice().sort().join('');
     const ex = document.getElementById('redoExplain');
     optEls.forEach((b, i) => {
       const letter = q.options[i][0];
@@ -703,7 +727,7 @@ function redoWrong(qid) {
       else b.classList.add('dim');
       b.disabled = true;
     });
-    ex.innerHTML = `<b>答案：</b>${q.answer.join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
+    ex.innerHTML = `<b>答案：</b>${normAnswer(q.answer).join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
     ex.classList.add('show');
     document.getElementById('redoSubmit').style.display = 'none';
     gradeWrong(w, correct);
@@ -1230,9 +1254,9 @@ function renderSimilarQuiz(body, data, qid) {
     root.querySelector("#simSubmit").textContent = submitLabel(data.type, ssel.size, "提交");
   });
   root.querySelector("#simSubmit").onclick = () => {
-    const correct = [...ssel].map(i => data.options[i][0]).sort().join("") === data.answer.slice().sort().join("");
+    const correct = [...ssel].map(i => data.options[i][0]).sort().join("") === normAnswer(data.answer).slice().sort().join("");
     root.querySelectorAll(".opt").forEach((b, i) => { const L = data.options[i][0]; if (data.answer.includes(L)) b.classList.add("correct"); else if (ssel.has(i)) b.classList.add("wrong"); else b.classList.add("dim"); b.disabled = true; });
-    const ex = root.querySelector("#simExpl"); ex.innerHTML = `<b>答案：</b>${data.answer.join("、")}　|　<b>解析：</b>${esc(data.explanation || "")}`; ex.classList.add("show"); root.querySelector("#simSubmit").style.display = "none";
+    const ex = root.querySelector("#simExpl"); ex.innerHTML = `<b>答案：</b>${normAnswer(data.answer).join("、")}　|　<b>解析：</b>${esc(data.explanation || "")}`; ex.classList.add("show"); root.querySelector("#simSubmit").style.display = "none";
   };
 }
 /* 用举一反三生成的新题直接替换原题（写入本地 corrections 覆盖层，可选推送题库） */
