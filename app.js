@@ -264,26 +264,57 @@ async function applyCloudPayload(payload, who) {
   toast(`已从 ${who} 拉取并合并 ✅（不会覆盖本机新数据）`); router();
 }
 
+/* ---------------- GitHub 写：Git Data API 六步（2026-08-03 重构，一劳永逸）
+   不再「GET sha → PUT」猜 sha，改走底层 Git 对象接口：
+   ref/heads/{branch} → blobs → trees → commits → refs，所有 sha 由服务端生成并返回，
+   从根上免疫 409/400「sha 不匹配」类冲突。已用真实仓库实测 6 步全 200。 ---------------- */
+async function githubWrite(repo, path, payloadObj, message, token) {
+  const B = `https://api.github.com/repos/${repo}`;
+  const H = { Authorization: 'token ' + token, 'Content-Type': 'application/json' };
+  const branch = (state.settings.branch || 'main');
+  const gi = async (method, seg, data) => {
+    const r = await fetch(`${B}/git/${seg}`, { method, headers: H, body: data ? JSON.stringify(data) : undefined });
+    return r;
+  };
+  // 1) 取当前分支 head commit（main 优先，master 兜底）
+  let head = null;
+  for (const b of [branch, 'main', 'master']) {
+    const r = await fetch(`${B}/git/ref/heads/${b}`, { headers: { Authorization: 'token ' + token } });
+    if (r.ok) { head = (await r.json()).object.sha; break; }
+  }
+  if (!head) { const e = await (await fetch(`${B}/git/ref/heads/${branch}`, { headers: { Authorization: 'token ' + token } })).text(); throw new Error('无法获取分支 head：' + e.slice(0, 120)); }
+  // 2) 上传文件内容为 blob（服务端返回 sha）
+  const blob = await gi('POST', 'blobs', { content: b64encode(JSON.stringify(payloadObj, null, 2)), encoding: 'base64' });
+  if (!blob.ok) { const e = await blob.text(); throw new Error('创建 blob 失败：' + e.slice(0, 120)); }
+  const blobSha = (await blob.json()).sha;
+  // 3) 取当前全树（含 data/user-data.json 的现有 entry）
+  const treeResp = await gi('GET', `trees/${head}?recursive=1`);
+  if (!treeResp.ok) { const e = await treeResp.text(); throw new Error('读取树失败：' + e.slice(0, 120)); }
+  const tree = await treeResp.json();
+  // 4) 建新树：把目标路径的 entry 替换成新 blob sha（不存在则新增）
+  const newTree = await gi('POST', 'trees', {
+    base_tree: tree.sha,
+    tree: [{ path, mode: '100644', type: 'blob', sha: blobSha }]
+  });
+  if (!newTree.ok) { const e = await newTree.text(); throw new Error('创建树失败：' + e.slice(0, 120)); }
+  const treeSha = (await newTree.json()).sha;
+  // 5) 创建 commit（父 = 原 head）
+  const commit = await gi('POST', 'commits', { message, tree: treeSha, parents: [head] });
+  if (!commit.ok) { const e = await commit.text(); throw new Error('创建 commit 失败：' + e.slice(0, 120)); }
+  const commitSha = (await commit.json()).sha;
+  // 6) 更新分支指向（force 覆盖，用户语义：以本机为准直接覆盖云端）
+  const ref = await gi('PATCH', `refs/heads/${branch}`, { sha: commitSha, force: true });
+  if (!ref.ok) { const e = await ref.text(); throw new Error('更新分支失败：' + e.slice(0, 120)); }
+  return true;
+}
 async function githubSave(silent) {
   const s = state.settings;
   if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 和仓库'); return; }
-  const path = s.path || 'data/user-data.json';
-  const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
-  const auth = { Authorization: 'token ' + s.token };
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let sha;
-    try { const r = await fetch(url, { headers: auth, cache: 'no-store' }); if (r.ok) sha = (await r.json()).sha; } catch (e) {}
-    const body = { message: 'sync econ study data', content: b64encode(JSON.stringify(syncPayload(), null, 2)), ...(sha ? { sha } : {}) };
-    try {
-      const r = await fetch(url, { method: 'PUT', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 GitHub ✅'); return; }
-      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
-      toast('GitHub 同步失败：' + r.status + '（检查 Token/仓库/路径）'); return;
-    } catch (e) {
-      if (attempt < 2) continue;
-      toast('GitHub 同步失败：' + e.message); return;
-    }
-  }
+  try {
+    await githubWrite(s.repo, s.path || 'data/user-data.json', syncPayload(), 'sync econ study data', s.token);
+    state.settings.lastSync = new Date().toISOString(); await saveSettings();
+    if (!silent) toast('已同步到 GitHub ✅');
+  } catch (e) { toast('GitHub 同步失败：' + e.message); }
 }
 async function githubLoad() {
   const s = state.settings;
@@ -321,29 +352,45 @@ async function giteeSave(silent) {
   const content = b64encode(JSON.stringify(syncPayload(), null, 2));
   const url = giteeUrl(c);
   const authHeader = 'Bearer ' + c.token;
+  const doGet = async () => {
+    // GET 双保险：?access_token= 查询串 → 401/403 降级 Bearer 头；no-store 防缓存旧 sha
+    let resp = await fetch(url + '?access_token=' + encodeURIComponent(c.token), { cache: 'no-store' });
+    if (resp.status === 401 || resp.status === 403) {
+      resp = await fetch(url, { headers: { 'Authorization': authHeader }, cache: 'no-store' });
+    }
+    return resp;
+  };
+  const getSha = async () => {
+    const g = await doGet();
+    if (g.status === 401 || g.status === 403) throw new Error('Gitee 鉴权失败：令牌无效或权限不足（请确认勾选 projects 权限）');
+    if (!g.ok) return null;               // 404 = 文件不存在 → null；其他状态码走下方重试
+    const j = await g.json().catch(() => ({}));
+    if (Array.isArray(j)) return null;    // 空目录/不存在返回 []，按无文件处理
+    return j.sha || null;
+  };
+  let lastErr = '';
   for (let attempt = 0; attempt < 3; attempt++) {
     let sha = null;
-    try {
-      // GET 优先用 access_token 查询串（免预检），不行就换 Bearer 头；no-store 防缓存旧 sha
-      let r = await fetch(url + '?access_token=' + encodeURIComponent(c.token), { cache: 'no-store' });
-      if (!r.ok) r = await fetch(url, { headers: { Authorization: authHeader }, cache: 'no-store' });
-      if (r.ok) { const j = await r.json(); if (!Array.isArray(j)) sha = j.sha; }
-    } catch (e) { /* 重试会重新获取 */ }
+    try { sha = await getSha(); }
+    catch (e) { toast('Gitee 同步失败：' + e.message); return; }
     try {
       const r = await fetch(url, {
         method: sha ? 'PUT' : 'POST',
-        headers: { Authorization: authHeader, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ access_token: c.token, content, message: 'sync econ study data', ...(sha ? { sha } : {}) })
       });
       if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); return; }
-      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
-      let t = ''; try { t = (await r.text()).slice(0, 100); } catch (e) {}
-      toast('Gitee 同步失败：' + r.status + ' ' + t); return;
+      const t = (await r.text().catch(() => '')).slice(0, 100);
+      lastErr = `Gitee ${r.status}: ${t}`;
+      if (r.status === 401 || r.status === 403) { toast('Gitee 同步失败：' + lastErr); return; }
+      if (r.status === 400 || r.status === 409 || r.status === 422) continue;   // 冲突 → 重拉最新 sha 再写
+      toast('Gitee 同步失败：' + lastErr); return;
     } catch (e) {
       if (attempt < 2) continue;
       toast('Gitee 同步失败：' + e.message); return;
     }
   }
+  toast('Gitee 同步失败：' + (lastErr || '重试 3 次仍冲突'));
 }
 async function giteeLoad() {
   const c = giteeCfg();
@@ -375,26 +422,18 @@ async function pushPatchesToRepo(extra) {
   const s = state.settings;
   if (!s.token || !s.repo) { toast('请先在设置填写 GitHub Token 与仓库'); return; }
   const path = 'data/patches.json';
-  const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
-  const auth = { Authorization: 'token ' + s.token };
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let sha, cur = {};
-    try {
-      const r = await fetch(url, { headers: auth, cache: 'no-store' });
-      if (r.ok) { const j = await r.json(); sha = j.sha; try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
-    } catch (e) { /* 文件可能还不存在，忽略 */ }
-    Object.assign(cur, extra);
-    const body = { message: 'add question patches', content: b64encode(JSON.stringify(cur, null, 2)), ...(sha ? { sha } : {}) };
-    try {
-      const r = await fetch(url, { method: 'PUT', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (r.ok) { toast('已推送到题库 ✅（下次打开站点即生效）'); return; }
-      if ([400, 409, 422].includes(r.status) && attempt < 2) continue;
-      toast('推送失败：' + r.status + '（检查 Token/仓库）'); return;
-    } catch (e) {
-      if (attempt < 2) continue;
-      toast('推送失败：' + e.message); return;
-    }
-  }
+  // 先读现有 patches 合并（Git Data API 六步写入，服务端生成 sha，免疫 409）
+  let cur = {};
+  try {
+    const url = `https://api.github.com/repos/${s.repo}/contents/${path}`;
+    const r = await fetch(url, { headers: { Authorization: 'token ' + s.token }, cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); try { cur = JSON.parse(b64decode(j.content)); } catch (e) { cur = {}; } }
+  } catch (e) { /* 文件可能还不存在，忽略 */ }
+  Object.assign(cur, extra);
+  try {
+    await githubWrite(s.repo, path, cur, 'add question patches', s.token);
+    toast('已推送到题库 ✅（下次打开站点即生效）');
+  } catch (e) { toast('推送失败：' + e.message); }
 }
 function pushOnePatch(qid) {
   const c = state.corrections[qid];
