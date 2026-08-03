@@ -470,9 +470,24 @@ function renderToday() {
    （兼容"导入旧备份但缺 dayDone"以及"按旧计划做了不同章"的情况，使今日页正确显示已完成） */
 function subjectDoneToday(subject) {
   const td = localToday();
-  if (state.progress.dayDone && state.progress.dayDone[td] && state.progress.dayDone[td][subject]) return true;
+  return dayDoneAt(subject, null, td);
+}
+/* 某计划日期某科是否已完成（供计划页使用）：
+   dayDone[日期][科] 优先；兜底匹配 progress.done 中以 "科:当天章" 开头的键
+   （兼容 #题段切片 后缀，如 economy:e38#0-40，以及旧版无切片键 economy:e39），
+   且完成日期 == 该计划日期。 */
+function dayDoneAt(subject, chapterId, date) {
+  const dd = state.progress.dayDone || {};
+  if (dd[date] && dd[date][subject]) return true;
   const done = state.progress.done || {};
-  for (const k in done) if (k.indexOf(subject + ':') === 0 && done[k] === td) return true;
+  const prefix = subject + ':' + (chapterId || '');
+  for (const k in done) {
+    // chapterId 为空 → 匹配该科任意章（subjectDoneToday 用）；否则要求以 "科:章" 精确匹配或后接 #切片
+    const hit = chapterId == null
+      ? k.indexOf(prefix) === 0
+      : (k === prefix || (k.indexOf(prefix) === 0 && k[prefix.length] === '#'));
+    if (hit && done[k] === date) return true;
+  }
   return false;
 }
 function chapterCard(subject, ch, label) {
@@ -892,11 +907,23 @@ function renderPlan() {
       const noteChaps = [ne, nb].filter(Boolean);
       const noteRead = noteChaps.length && noteChaps.every(c => isNoteRead((ne === c) ? 'economy' : 'business', c));
       const note = noteChaps.length ? `<a class="btn ghost" style="padding:4px 10px;font-size:12px" href="#/notes?date=${d.date}" title="今日配套笔记（教材三色笔记）">📒 看笔记(${noteChaps.join('/')})${noteRead ? '✓' : ''}</a>` : '';
-      const done = (d.economy && state.progress.done['economy:' + d.economy.chapter]) && (d.business && state.progress.done['business:' + d.business.chapter]);
-      const cls = d.date === today ? 'a' : (done ? 'g' : '');
-      const status = d.date === today ? '今天' : (d.date < today ? (done ? '已完成' : '待补学') : '待开始');
+      // 每科完成判定：真题(dayDoneAt 优先+done 前缀兜底) 且 笔记读完；无计划视为完成
+      const ecoDone = d.economy ? dayDoneAt('economy', d.economy.chapter, d.date) : true;
+      const ecoNoteOk = ne ? isNoteRead('economy', ne) : true;
+      const ecoFull = d.economy ? (ecoDone && ecoNoteOk) : true;
+      const busDone = d.business ? dayDoneAt('business', d.business.chapter, d.date) : true;
+      const busNoteOk = nb ? isNoteRead('business', nb) : true;
+      const busFull = d.business ? (busDone && busNoteOk) : true;
+      const done = ecoFull && busFull;
+      const anyDone = ecoDone || busDone;                 // 任一小项完成 → 部分完成
+      const cls = d.date === today ? 'a' : (done ? 'g' : (d.date < today && anyDone ? 'a' : ''));
+      const status = d.date === today ? '今天'
+        : (d.date < today ? (done ? '已完成✓' : (anyDone ? '部分完成' : '待补学')) : '待开始');
+      // 每科旁打勾：该科真题+笔记全部完成才显示 ✓
+      const ecoTick = d.economy && ecoFull ? ' <span class="ok">✓</span>' : '';
+      const busTick = d.business && busFull ? ' <span class="ok">✓</span>' : '';
       rows += `<div class="plan-row"><span class="pdate">${d.date}</span><span class="pill ${cls}">${status}</span>
-        <span class="ptitle">${eco}　|　${bus} ${note}</span></div>`;
+        <span class="ptitle">${eco}${ecoTick}　|　${bus}${busTick} ${note}</span></div>`;
     }
     const phCls = ph.name.indexOf('强化') >= 0 ? 'a' : (ph.name.indexOf('冲刺') >= 0 ? '' : 'g');
     html += `<div class="card"><span class="pill ${phCls}">${ph.name}</span><h3>${ph.start} ~ ${ph.end}（${phDays.length} 天）</h3>${rows}</div>`;
