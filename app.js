@@ -140,13 +140,14 @@ function migrateWrong() {
 }
 function clearCorrections() { state.corrections = {}; saveCorrections(); toast('已清除全部 AI 修正'); router(); }
 
-/* ---------------- 答题会话（进度续接） ---------------- */
+/* ---------------- 答题会话（进度续接 + 上一题/下一题回看） ---------------- */
 function sessionFromQueue(queue, title, fromWrong, doneKeys, marksDone) {
   state.session = {
     active: true,
     items: queue.map(it => ({ subject: it.subject, chapterId: it.chapterId, qid: it.q.id })),
     idx: 0, correct: 0, wrong: 0, fromWrong: !!fromWrong, title,
-    ts: new Date().toISOString(), doneKeys: doneKeys || [], marksDone: !!marksDone
+    ts: new Date().toISOString(), doneKeys: doneKeys || [], marksDone: !!marksDone,
+    answers: {}   // 每题作答记录 { qid: { sel:[index...], submitted:bool, correct:bool } }，支持回看
   };
   saveSession();
 }
@@ -158,7 +159,7 @@ function quizFromSession() {
     q: applyCorrections(findQById(it.qid) || {}), subject: it.subject, chapterId: it.chapterId,
     chapterTitle: (findChapter(it.subject, it.chapterId) || {}).title || ''
   }));
-  quiz = { queue, idx: s.idx, correct: s.correct, wrong: s.wrong, title: s.title, fromWrong: s.fromWrong, _doneKeys: s.doneKeys, _marksDoneWhenComplete: s.marksDone };
+  quiz = { queue, idx: s.idx, correct: s.correct, wrong: s.wrong, title: s.title, fromWrong: s.fromWrong, _doneKeys: s.doneKeys, _marksDoneWhenComplete: s.marksDone, _answers: s.answers || {} };
   return quiz;
 }
 function resumeQuiz() { const q = quizFromSession(); if (q) renderQuiz(); else router(); }
@@ -331,75 +332,84 @@ async function githubLoad() {
 }
 
 /* Gitee（码云）：国内直连，单位网络可用。令牌只需勾选 projects 权限。
-   与 GitHub 的差异：鉴权用 Bearer / access_token；新建文件用 POST、更新用 PUT；
-   sha 过期或文件已存在时 Gitee 会回 400/409/422 —— 重拉 sha 再 PUT 兜底。
-   GET 一律用 ?access_token= 查询串（简单请求，免 CORS 预检，最稳）。 */
+   ★ 2026-08-04 重构：写入改为「时间戳新文件」策略——
+   Gitee 的 Contents API 更新已存在文件必须带 sha（且无 Git Data API 写端点），sha 过期即 400/409；
+   改为每次生成 user-data-YYYYMMDD-HHMMSS.json 新文件（POST 新建、永不需要 sha），
+   读取时列出目录取时间戳最新者。天然防并发冲突，旧文件保留当历史备份。
+   giteePath 语义 = 目录（默认 jingjishidata/，可留空用仓库根目录）。 */
 function giteeCfg() {
   const s = state.settings;
-  return { token: (s.giteeToken || '').trim(), repo: (s.giteeRepo || '').trim(), path: (s.giteePath || 'user-data.json').trim() };
+  const dir = (s.giteePath || '').trim();
+  return { token: (s.giteeToken || '').trim(), repo: (s.giteeRepo || '').trim(), dir: dir && !/\/$/.test(dir) ? dir + '/' : dir };
 }
-function giteeUrl(c) { return `https://gitee.com/api/v5/repos/${c.repo}/contents/${c.path}`; }
-async function giteeGet(c) {
-  // cache:'no-store' 防浏览器 HTTP 缓存返回旧 sha（Gitee 响应无 no-cache 头，会命中缓存导致 PUT 400）
-  const r = await fetch(`${giteeUrl(c)}?access_token=${encodeURIComponent(c.token)}`, { cache: 'no-store' });
-  if (!r.ok) return { status: r.status };
-  const j = await r.json();
-  return { status: 200, json: Array.isArray(j) ? null : j };
+function giteeDirUrl(c) {
+  return `https://gitee.com/api/v5/repos/${c.repo}/contents/${c.dir || ''}`;
+}
+function giteeFileUrl(c, name) {
+  return `https://gitee.com/api/v5/repos/${c.repo}/contents/${c.dir}${name}`;
+}
+function giteeStampName() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `user-data-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.json`;
+}
+/* Gitee 请求带鉴权双保险：?access_token= 查询串 → 401/403 降级 Bearer 头；no-store 防缓存 */
+async function giteeReq(url, c, method, body) {
+  const authHeader = 'Bearer ' + c.token;
+  const init = { method: method || 'GET', headers: {}, cache: 'no-store' };
+  if (method && method !== 'GET') {
+    init.headers['Content-Type'] = 'application/json';
+    init.headers['Authorization'] = authHeader;
+    init.body = JSON.stringify(body || {});
+  }
+  let resp = await fetch(url + (method === 'GET' ? '?access_token=' + encodeURIComponent(c.token) : ''), init);
+  if (resp.status === 401 || resp.status === 403 && method === 'GET') {
+    resp = await fetch(url, { ...init, headers: { Authorization: authHeader, ...(method === 'GET' ? {} : { 'Content-Type': 'application/json' }) } });
+  }
+  return resp;
 }
 async function giteeSave(silent) {
   const c = giteeCfg();
   if (!c.token || !c.repo) { toast('请先在设置填写 Gitee 令牌和仓库'); return; }
   const content = b64encode(JSON.stringify(syncPayload(), null, 2));
-  const url = giteeUrl(c);
-  const authHeader = 'Bearer ' + c.token;
-  const doGet = async () => {
-    // GET 双保险：?access_token= 查询串 → 401/403 降级 Bearer 头；no-store 防缓存旧 sha
-    let resp = await fetch(url + '?access_token=' + encodeURIComponent(c.token), { cache: 'no-store' });
-    if (resp.status === 401 || resp.status === 403) {
-      resp = await fetch(url, { headers: { 'Authorization': authHeader }, cache: 'no-store' });
+  // 时间戳文件名 → POST 新建（无需 sha，免疫 400/409）
+  let name = giteeStampName();
+  try {
+    const url = giteeFileUrl(c, name);
+    const r = await giteeReq(url, c, 'POST', { content, message: 'sync econ study data' });
+    if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); return; }
+    // 同秒撞名 → 追加秒级随机数重试一次
+    if (r.status === 400 || r.status === 409 || r.status === 422) {
+      name = giteeStampName().replace('.json', '-' + Math.floor(Math.random() * 900 + 100) + '.json');
+      const r2 = await giteeReq(giteeFileUrl(c, name), c, 'POST', { content, message: 'sync econ study data' });
+      if (r2.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); return; }
+      const t = (await r2.text().catch(() => '')).slice(0, 120);
+      toast('Gitee 同步失败：' + r2.status + ' ' + t); return;
     }
-    return resp;
-  };
-  const getSha = async () => {
-    const g = await doGet();
-    if (g.status === 401 || g.status === 403) throw new Error('Gitee 鉴权失败：令牌无效或权限不足（请确认勾选 projects 权限）');
-    if (!g.ok) return null;               // 404 = 文件不存在 → null；其他状态码走下方重试
-    const j = await g.json().catch(() => ({}));
-    if (Array.isArray(j)) return null;    // 空目录/不存在返回 []，按无文件处理
-    return j.sha || null;
-  };
-  let lastErr = '';
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let sha = null;
-    try { sha = await getSha(); }
-    catch (e) { toast('Gitee 同步失败：' + e.message); return; }
-    try {
-      const r = await fetch(url, {
-        method: sha ? 'PUT' : 'POST',
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: c.token, content, message: 'sync econ study data', ...(sha ? { sha } : {}) })
-      });
-      if (r.ok) { state.settings.lastSync = new Date().toISOString(); await saveSettings(); if (!silent) toast('已同步到 Gitee ✅'); return; }
-      const t = (await r.text().catch(() => '')).slice(0, 100);
-      lastErr = `Gitee ${r.status}: ${t}`;
-      if (r.status === 401 || r.status === 403) { toast('Gitee 同步失败：' + lastErr); return; }
-      if (r.status === 400 || r.status === 409 || r.status === 422) continue;   // 冲突 → 重拉最新 sha 再写
-      toast('Gitee 同步失败：' + lastErr); return;
-    } catch (e) {
-      if (attempt < 2) continue;
-      toast('Gitee 同步失败：' + e.message); return;
-    }
-  }
-  toast('Gitee 同步失败：' + (lastErr || '重试 3 次仍冲突'));
+    const t = (await r.text().catch(() => '')).slice(0, 120);
+    toast('Gitee 同步失败：' + r.status + ' ' + t);
+  } catch (e) { toast('Gitee 同步失败：' + e.message); }
 }
 async function giteeLoad() {
   const c = giteeCfg();
   if (!c.token || !c.repo) { toast('请先填写 Gitee 令牌和仓库'); return; }
   try {
-    const cur = await giteeGet(c);
-    if (cur.status === 404) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
-    if (cur.status !== 200 || !cur.json || !cur.json.content) { toast('Gitee 拉取失败：' + cur.status + '（检查令牌/仓库/路径）'); return; }
-    await applyCloudPayload(JSON.parse(b64decode(cur.json.content)), 'Gitee');
+    // 列目录 → 找 user-data-*.json 时间戳最新者
+    const listResp = await giteeReq(giteeDirUrl(c), c, 'GET');
+    if (listResp.status === 404) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
+    if (listResp.status === 401 || listResp.status === 403) { toast('Gitee 拉取失败：' + listResp.status + '（令牌无效或权限不足）'); return; }
+    if (!listResp.ok) { toast('Gitee 拉取失败：' + listResp.status); return; }
+    const list = await listResp.json().catch(() => []);
+    const files = (Array.isArray(list) ? list : []).filter(f => f && f.name && /^user-data-\d{8}-\d{6}(-\d+)?\.json$/.test(f.name));
+    if (!files.length) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
+    // 取时间戳最大者（文件名内时间戳可直接字符串比较）
+    files.sort((a, b) => b.name.localeCompare(a.name));
+    const latest = files[0];
+    const fileResp = await giteeReq(giteeFileUrl(c, latest.name), c, 'GET');
+    if (!fileResp.ok) { toast('Gitee 拉取失败：' + fileResp.status + '（检查令牌/仓库/路径）'); return; }
+    const j = await fileResp.json().catch(() => ({}));
+    if (!j.content) { toast('Gitee 拉取失败：文件内容为空'); return; }
+    await applyCloudPayload(JSON.parse(b64decode(j.content)), 'Gitee');
   } catch (e) { toast('Gitee 拉取失败：' + e.message); }
 }
 
@@ -613,22 +623,76 @@ function optHtml(options, t) {
 
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
+  if (!quiz._answers) quiz._answers = {};
   sel = new Set();
   const { q } = quiz.queue[quiz.idx];
   const opts = optHtml(q.options, q.type);
   const corrBadge = q._corrected ? `<span class="pill a">⚠️AI修正答案</span>` : '';
+  // 回看：该题已提交过 → 恢复选项选中态与判分展示
+  const rec = quiz._answers && quiz._answers[q.id];
+  const answered = !!(rec && rec.submitted);
+  const submitBtnHtml = answered
+    ? '<span class="pill g" style="margin-right:6px">✅ 已提交</span>'
+    : '<button class="btn g" id="submitBtn" disabled>提交答案</button>';
+  // 案例材料回看：若当前题属于某个案例组（前面 6 题内存在「案例（N）」材料题）→ 提供回到材料题
+  const caseLink = (() => {
+    const stem = q.stem || '';
+    const selfIsCase = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem);
+    if (answered || selfIsCase) return '';
+    for (let k = quiz.idx - 1; k >= 0 && k >= quiz.idx - 6; k--) {
+      const pk = quiz.queue[k].q.stem || '';
+      const isCaseHead = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk);
+      if (isCaseHead) {
+        return `<a class="btn ghost" style="padding:4px 10px;font-size:12px;margin-left:8px" onclick="quizGo(${k})" title="回看本案例组的题干材料">📄 案例材料</a>`;
+      }
+    }
+    return '';
+  })();
   app.innerHTML = `<div class="card">
     <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${quiz.idx + 1}/${quiz.queue.length}</span></div>
-    <div class="q"><div class="qtype">${typeBadge(q.type)}${corrBadge}</div><div class="stem">${esc(q.stem)}</div>${opts}
-      <button class="btn g" id="submitBtn" disabled>提交答案</button>
+    <div class="q"><div class="qtype">${typeBadge(q.type)}${corrBadge}${caseLink}</div><div class="stem">${esc(q.stem)}</div>${opts}
+      ${submitBtnHtml}
       <div class="explain" id="explain"></div>
       <div id="aiBox" style="margin-top:10px"></div>
     </div>
-    <div id="nav" style="margin-top:10px"></div>
+    <div id="nav" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn ghost" id="prevBtn" ${quiz.idx > 0 ? '' : 'disabled'}>‹ 上一题</button>
+      <button class="btn ghost" id="nextBtn">下一题 ›</button>
+      <span class="muted" style="margin-left:auto;font-size:12px">可直接跳转；已提交的题可回看，未提交的回头再答</span>
+    </div>
   </div>`;
+  document.getElementById('prevBtn').onclick = () => quizGo(quiz.idx - 1);
+  document.getElementById('nextBtn').onclick = () => quizGo(quiz.idx + 1);
   app.querySelectorAll('.opt').forEach(b => b.onclick = () => onPick(b, q));
-  document.getElementById('submitBtn').onclick = () => onSubmit(q);
+  const sb = document.getElementById('submitBtn');
+  if (sb) sb.onclick = () => onSubmit(q);
+  // 已提交的题：回看时展示原选项与判分结果
+  if (answered && rec) {
+    sel = new Set(rec.sel || []);
+    const ex = document.getElementById('explain');
+    app.querySelectorAll('.opt').forEach((b, i) => {
+      const letter = q.options[i][0];
+      if (q.answer.includes(letter)) b.classList.add('correct');
+      else if ((rec.sel || []).includes(i)) b.classList.add('wrong');
+      else b.classList.add('dim');
+      b.disabled = true;
+    });
+    ex.innerHTML = `<b>答案：</b>${normAnswer(q.answer).join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
+    ex.classList.add('show');
+    const ab = document.getElementById('aiBox');
+    if (ab) ab.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn ghost" onclick="aiExplainBtn('${q.id}')">🤖 AI 精讲</button>
+        <button class="btn ghost" onclick="aiSimilarBtn('${q.id}')">🎯 举一反三</button>
+      </div><div id="aiResult"></div>`;
+  }
 }
+function quizGo(i) {
+  if (i < 0 || i >= quiz.queue.length) return;
+  quiz.idx = i;
+  if (state.session) { state.session.idx = i; saveSession(); }
+  renderQuiz();
+}
+window.quizGo = quizGo;
 function onPick(b, q) {
   if (document.getElementById('explain').classList.contains('show')) return;
   const submitBtn = document.getElementById('submitBtn');
@@ -667,7 +731,14 @@ function onSubmit(q) {
     }
   }
   if (state.session) { state.session.correct = quiz.correct; state.session.wrong = quiz.wrong; saveSession(); }
-  document.getElementById('nav').innerHTML = `<button class="btn" onclick="quizNext()">${quiz.idx + 1 < quiz.queue.length ? '下一题 →' : '查看结果'}</button>`;
+  // 记录本题作答（供上一题回看）
+  quiz._answers = quiz._answers || {};
+  quiz._answers[q.id] = { sel: [...sel], submitted: true, correct };
+  if (state.session) { state.session.answers = quiz._answers; saveSession(); }
+  document.getElementById('nav').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn ghost" onclick="quizGo(${quiz.idx - 1})" ${quiz.idx > 0 ? '' : 'disabled'}>‹ 上一题</button>
+    <button class="btn" onclick="quizNext()">${quiz.idx + 1 < quiz.queue.length ? '下一题 →' : '查看结果'}</button>
+  </div>`;
   const ab = document.getElementById('aiBox');
   if (ab) ab.innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn ghost" onclick="aiExplainBtn('${q.id}')">🤖 AI 精讲</button>
@@ -1022,8 +1093,9 @@ function renderSettings() {
       <input id="gtok" type="password" placeholder="Gitee 私人令牌" value="${s.giteeToken || ''}">
       <label>Gitee 仓库（格式 owner/repo）</label>
       <input id="grepo" placeholder="homjanon/jingjishidata" value="${s.giteeRepo || ''}">
-      <label>数据文件路径（使用仓库默认分支）</label>
-      <input id="gpath" placeholder="user-data.json" value="${s.giteePath || 'user-data.json'}">
+      <label>Gitee 数据目录（用仓库默认分支；可留空=仓库根目录）</label>
+      <input id="gpath" placeholder="jingjishidata/" value="${s.giteePath || 'jingjishidata/'}">
+      <p class="muted" style="font-size:12px">每次同步生成 <b>user-data-日期-时间.json</b> 新文件（无需覆盖旧文件，天然免 sha 冲突）；拉取自动读取时间戳最新的那份，旧文件保留为历史备份。</p>
     </div>
     <label style="margin-top:12px"><input type="checkbox" id="auto" ${s.auto ? 'checked' : ''}> 自动同步（数据变动 15 秒后静默上传到<b id="autoProv">${cloudName()}</b>，成功不打扰、失败才提示）</label>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
@@ -1059,7 +1131,7 @@ window.saveSet = async function () {
   state.settings.path = val('path', 'data/user-data.json');
   state.settings.giteeToken = val('gtok');
   state.settings.giteeRepo = val('grepo');
-  state.settings.giteePath = val('gpath', 'user-data.json');
+  state.settings.giteePath = val('gpath', 'jingjishidata/');
   state.settings.auto = document.getElementById('auto').checked;
   state.settings.aiCorrect = document.getElementById('aic').checked;
   await saveSettings();
