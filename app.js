@@ -221,6 +221,27 @@ function toast(msg) {
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
 
 /* ---------------- 错题库 ---------------- */
+/* 找案例材料题：在所属章内向前 6 题扫「案例（N）」材料题；本题自己就是材料题则返回 null */
+function findCaseMaterial(subject, chapterId, qid) {
+  const ch = findChapter(subject, chapterId);
+  if (!ch || !ch.questions) return null;
+  const qs = ch.questions;
+  const i = qs.findIndex(x => x.id === qid);
+  if (i < 0) return null;
+  const isMat = s => /^案例\s*[（(]?[一二三四五六七八九十\d]/.test((s || '').trim()) || /案例[（(]?[一二三四五六七八九十\d]/.test((s || '').slice(0, 10));
+  if (isMat(qs[i].stem)) return null;                       // 自己就是材料题，无需回看
+  for (let k = i - 1; k >= 0 && i - k <= 6; k--) {
+    if (isMat(qs[k].stem)) return qs[k];
+  }
+  return null;
+}
+/* 案例材料折叠区 HTML（列表 / 单题重做通用；无材料返回空串） */
+function caseMaterialHtml(subject, chapterId, qid) {
+  const m = findCaseMaterial(subject, chapterId, qid);
+  if (!m) return '';
+  const num = ((m.stem || '').match(/案例\s*[（(]?\s*([一二三四五六七八九十\d]+)/) || [])[1] || '';
+  return `<details class="case-mat"><summary>📄 案例材料${num ? '（案例' + num + '）' : ''}</summary><div class="stem">${esc(m.stem)}</div></details>`;
+}
 function addWrong(item) {
   const ex = state.wrong.find(w => w.qid === item.qid);
   if (ex) { ex.count = (ex.count || 1) + 1; ex.last = localToday(); }
@@ -394,24 +415,64 @@ async function giteeLoad() {
   const c = giteeCfg();
   if (!c.token || !c.repo) { toast('请先填写 Gitee 令牌和仓库'); return; }
   try {
-    // 列目录 → 找 user-data-*.json 时间戳最新者
+    // 列目录 → 全部 user-data-*.json 快照，按时间倒序
     const listResp = await giteeReq(giteeDirUrl(c), c, 'GET');
     if (listResp.status === 404) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
     if (listResp.status === 401 || listResp.status === 403) { toast('Gitee 拉取失败：' + listResp.status + '（令牌无效或权限不足）'); return; }
     if (!listResp.ok) { toast('Gitee 拉取失败：' + listResp.status); return; }
     const list = await listResp.json().catch(() => []);
-    const files = (Array.isArray(list) ? list : []).filter(f => f && f.name && /^user-data-\d{8}-\d{6}(-\d+)?\.json$/.test(f.name));
+    const files = (Array.isArray(list) ? list : []).filter(f => f && f.name && /^user-data-\d{8}-\d{6}(-\d+)?\.json$/.test(f.name)).sort((a, b) => b.name.localeCompare(a.name));
     if (!files.length) { toast('云端还没有数据，请先点「同步到云端」备份一次'); return; }
-    // 取时间戳最大者（文件名内时间戳可直接字符串比较）
-    files.sort((a, b) => b.name.localeCompare(a.name));
-    const latest = files[0];
-    const fileResp = await giteeReq(giteeFileUrl(c, latest.name), c, 'GET');
-    if (!fileResp.ok) { toast('Gitee 拉取失败：' + fileResp.status + '（检查令牌/仓库/路径）'); return; }
-    const j = await fileResp.json().catch(() => ({}));
-    if (!j.content) { toast('Gitee 拉取失败：文件内容为空'); return; }
-    await applyCloudPayload(JSON.parse(b64decode(j.content)), 'Gitee');
+    renderGiteePicker(c, files);
   } catch (e) { toast('Gitee 拉取失败：' + e.message); }
 }
+/* 拉取文件选择界面：列出云端全部快照，默认勾选最新一份，可多选，也可一键合并全部 */
+function renderGiteePicker(c, files) {
+  app.innerHTML = `<div class="card">
+    <h2>📥 从 Gitee 拉取 · 选择快照</h2>
+    <p class="muted">云端共 <b>${files.length}</b> 份历史快照（按时间倒序，最新在上）。可勾选多份或一键合并全部——合并为<b>幂等并集</b>，不会覆盖本机新数据，只会越合越全。</p>
+    <div style="margin:12px 0;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn g" onclick="mergeGiteeFiles('all')">✅ 合并全部 ${files.length} 份</button>
+      <button class="btn" onclick="mergeGiteeFiles('pick')">📥 合并所选（${files.length} 份中勾选）</button>
+      <button class="btn ghost" onclick="router()">取消</button>
+    </div>
+    <div style="max-height:58vh;overflow:auto;margin-top:6px">
+      ${files.map((f, i) => `<label class="gfile"><input type="checkbox" data-name="${esc(f.name)}" ${i === 0 ? 'checked' : ''}> <b>${esc(f.name)}</b> <span class="muted">${f.size ? Math.max(1, Math.round(f.size / 1024)) + ' KB' : ''}</span></label>`).join('')}
+    </div>
+  </div>`;
+  window._giteeFiles = files;
+  window._giteeCfg = c;
+}
+window.mergeGiteeFiles = async function (mode) {
+  const files = window._giteeFiles || [];
+  const c = window._giteeCfg;
+  if (!files.length || !c) return;
+  let pick;
+  if (mode === 'pick') {
+    pick = files.filter(f => { const el = document.querySelector('input[data-name="' + f.name + '"]'); return el && el.checked; });
+    if (!pick.length) { toast('请至少勾选一份快照'); return; }
+  } else pick = files.slice();
+  toast(`正在合并 ${pick.length} 份快照…`);
+  pick.sort((a, b) => a.name.localeCompare(b.name));   // 旧→新逐个合并，幂等
+  let merged = 0;
+  for (const f of pick) {
+    const fileResp = await giteeReq(giteeFileUrl(c, f.name), c, 'GET');
+    if (!fileResp.ok) continue;
+    const j = await fileResp.json().catch(() => ({}));
+    if (!j.content) continue;
+    let payload;
+    try { payload = JSON.parse(b64decode(j.content)); } catch (e) { continue; }
+    state.wrong = mergeWrong(payload.wrong, state.wrong);
+    state.progress = mergeProgress(payload.progress, state.progress);
+    state.corrections = mergeCorrections(payload.corrections, state.corrections);
+    merged++;
+  }
+  if (!merged) { toast('Gitee 拉取失败：没有可读取的数据文件'); return; }
+  await saveWrong(); await saveProgress(); await saveCorrections();
+  validateSession(true);   // 另一台设备已有新进度，本机残留会话作废
+  state.settings.lastSync = new Date().toISOString(); await saveSettings();
+  toast(`已从 Gitee 合并 ${merged} 份快照 ✅（不会覆盖本机新数据）`); router();
+};
 
 /* 平台路由：设置里的「同步方式」决定走哪条通道 */
 function cloudProvider() { return state.settings.provider === 'gitee' ? 'gitee' : 'github'; }
@@ -778,14 +839,28 @@ function renderQuizSummary() {
 function renderWrong() {
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
   const dueList = state.wrong.filter(isDue);
+  const sortMode = state.settings.wrongSort || 'rand';
+  const sortBtn = m => `<button class="btn ghost ${sortMode === m ? 'sel' : ''}" onclick="setWrongSort('${m}')">${m === 'rand' ? '🎲 随机' : m === 'new' ? '🕐 最新在前' : '🕐 最早在前'}</button>`;
   const header = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
       <button class="btn ghost" onclick="clearWrong()">清空</button></div>
     <p class="muted">长期保存 · 按艾宾浩斯记忆曲线自动排程。今日待复习 <b style="color:var(--red)">${dueList.length}</b> 题。AI 修正过的题会标「AI已修正」。</p>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="startWrongDue()">📌 复习待做（${dueList.length}）</button>
       <button class="btn g" onclick="startWrongAll()">🔁 全部重做（${state.wrong.length}）</button>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span class="muted" style="font-size:13px">排序：</span>${sortBtn('rand')}${sortBtn('new')}${sortBtn('old')}
+      <span class="muted" style="font-size:12px">${sortMode === 'rand' ? '随机打乱，待复习题置顶' : ''}</span>
     </div></div>`;
-  const items = state.wrong.slice().reverse().map(w => {
+  let list = state.wrong.slice();
+  if (sortMode === 'rand') {
+    const due = list.filter(isDue), rest = list.filter(w => !isDue(w));
+    shuffleArr(due); shuffleArr(rest);
+    list = due.concat(rest);
+  } else if (sortMode === 'new') {
+    list.reverse();
+  }
+  const items = list.map(w => {
     const corr = state.corrections[w.qid];
     const canRedo = Array.isArray(w.options) && w.options.length >= 2;
     const due = isDue(w);
@@ -797,6 +872,7 @@ function renderWrong() {
     return `
     <div class="q">
       <div class="meta">${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}</div>
+      ${caseMaterialHtml(w.subject, w.chapterId, w.qid)}
       <div class="stem">${esc(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(dispAnswer)} ${corrBadge}</div>
       ${dispExpl ? `<div class="explain show" style="background:var(--amber-l)"><b>解析：</b>${esc(dispExpl)}</div>` : ''}
@@ -811,6 +887,7 @@ function renderWrong() {
   }).join('');
   app.innerHTML = header + items;
 }
+window.setWrongSort = function (m) { state.settings.wrongSort = m; saveSettings(); renderWrong(); };
 window.rmWrong = function (qid) { removeWrong(qid); renderWrong(); };
 window.clearWrong = function () { if (confirm('确定清空全部错题？')) { state.wrong = []; saveWrong(); renderWrong(); } };
 
@@ -822,7 +899,7 @@ function redoWrong(qid) {
   const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
   const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
-    <div class="q"><div class="qtype">${typeBadge(q.type)}</div><div class="stem">${esc(q.stem)}</div>
+    <div class="q"><div class="qtype">${typeBadge(q.type)}</div>${caseMaterialHtml(w.subject, w.chapterId, w.qid)}<div class="stem">${esc(q.stem)}</div>
     ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
     <div class="explain" id="redoExplain"></div></div>
@@ -1236,9 +1313,9 @@ app.addEventListener('click', e => {
 /* ================ AI 讲解（浏览器直连 LLM，镜像 delivery-ocr 模式） ================ */
 window.currentAIQid = null;
 const AI_PRESETS = {
-  qwen35:     { name: "硅基流动 Qwen3.5-35B-A3B（直连✅·轻快）", baseUrl: "https://api.siliconflow.cn/v1/chat/completions", model: "Qwen/Qwen3.5-35B-A3B", key: "siliconflow" },
-  siliconflow: { name: "硅基流动 DeepSeek-V4-Flash（直连✅）", baseUrl: "https://api.siliconflow.cn/v1/chat/completions", model: "deepseek-ai/DeepSeek-V4-Flash", key: "siliconflow" },
-  agnes:      { name: "Agnes 2.0-Flash（免费·直连✅）", baseUrl: "https://apihub.agnes-ai.com/v1/chat/completions", model: "agnes-2.0-flash", key: "agnes" },
+  zhipu:    { name: "智谱 AI glm-4.6v（直连✅）", baseUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions", model: "glm-4.6v", key: "zhipu" },
+  siliconflow: { name: "硅基流动 DeepSeek-V4-Flash（备用）", baseUrl: "https://api.siliconflow.cn/v1/chat/completions", model: "deepseek-ai/DeepSeek-V4-Flash", key: "siliconflow" },
+  agnes:    { name: "Agnes 2.0-Flash（免费·备用）", baseUrl: "https://apihub.agnes-ai.com/v1/chat/completions", model: "agnes-2.0-flash", key: "agnes" },
 };
 const AI_TEACHER_SYS = "你是中级经济师考试（经济基础+工商管理）的辅导老师，擅长用大白话和生活例子讲透考点，并编好记的口诀。面向只想稳过84分的考生，回答通俗、简洁、不啰嗦。";
 function aiStore(p) { return "ej_" + p + "Key"; }
@@ -1246,8 +1323,17 @@ function aiModelStore(p) { return "ej_model_" + p; }
 function aiGetKey(p) { return localStorage.getItem(aiStore(p)) || ""; }
 function aiGetModel(p) { return localStorage.getItem(aiModelStore(p)) || AI_PRESETS[p].model; }
 function aiCfg() {
-  const p = (state.settings && state.settings.aiProvider && AI_PRESETS[state.settings.aiProvider]) ? state.settings.aiProvider : "qwen35";
+  let p = state.settings.aiProvider;
+  if (!p || !AI_PRESETS[p]) p = "zhipu";   // 旧值（如 qwen35）自动落到默认智谱
   return { provider: p, baseUrl: AI_PRESETS[p].baseUrl, model: aiGetModel(p), key: aiGetKey(p) };
+}
+/* CORS 代理（可选）：设置里填代理前缀，请求走 代理?url=<目标>；留空直连 */
+function proxiedUrl(base) {
+  const p = (state.settings.aiProxy || "").trim();
+  if (!p) return base;
+  const enc = encodeURIComponent(base);
+  if (p.indexOf("url=") >= 0) return p + enc;
+  return p + (p.indexOf("?") >= 0 ? "&" : "?") + "url=" + enc;
 }
 function extractJSON(text) {
   if (!text) return null;
@@ -1269,20 +1355,71 @@ function repairJSON(s) {
     return JSON.parse(out);
   } catch (e) { return null; }
 }
-async function callLLM(messages, opts) {
-  opts = opts || {};
-  const cfg = aiCfg();
-  if (!cfg.key) return { error: "nokey" };
-  const body = { model: cfg.model, messages, temperature: (opts.temperature != null ? opts.temperature : 0.6), stream: false };
+/* 单次调用（无降级）：onToken(t, full) 回调增量 → 流式；否则非流式。90s（流式 120s）超时 */
+async function callLLMOnce(cfg, messages, opts) {
+  const stream = !!opts.onToken;
+  const body = { model: cfg.model, messages, temperature: (opts.temperature != null ? opts.temperature : 0.6), stream };
+  const ctl = new AbortController();
+  const to = setTimeout(() => ctl.abort(), stream ? 120000 : 90000);
   let resp;
-  try { resp = await fetch(cfg.baseUrl, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + cfg.key }, body: JSON.stringify(body) }); }
-  catch (e) { return { error: "net", msg: String(e) }; }
+  try {
+    resp = await fetch(proxiedUrl(cfg.baseUrl), { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + cfg.key }, body: JSON.stringify(body), signal: ctl.signal });
+  } catch (e) { clearTimeout(to); return { error: "net", msg: String(e) }; }
+  clearTimeout(to);
   if (!resp.ok) { let t = ""; try { t = await resp.text(); } catch (_) {} return { error: "http", status: resp.status, msg: (t || "").slice(0, 300) }; }
+  if (stream) {
+    try {
+      if (!resp.body) return { error: "parse", msg: "no stream body" };
+      const reader = resp.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", full = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let idx;
+        while ((idx = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+          if (line.indexOf("data:") !== 0) continue;
+          const data = line.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const j = JSON.parse(data);
+            const delta = (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) || "";
+            if (delta) { full += delta; opts.onToken(delta, full); }
+          } catch (e) {}
+        }
+      }
+      if (!full) return { error: "empty" };
+      if (opts.json) { const p2 = extractJSON(full); if (!p2) return { error: "json", content: full }; return { content: p2 }; }
+      return { content: full };
+    } catch (e) { return { error: "net", msg: String(e) }; }
+  }
   let j; try { j = await resp.json(); } catch (e) { return { error: "parse", msg: String(e) }; }
   const c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
   if (c == null) return { error: "empty", raw: j };
   if (opts.json) { const p2 = extractJSON(c); if (!p2) return { error: "json", content: c }; return { content: p2 }; }
   return { content: c };
+}
+/* 带自动降级的调用：主通道失败 → 按预设顺序切备用（无 Key 的跳过）；切换时调 onReset() 清空已显示内容 */
+async function callLLM(messages, opts) {
+  opts = opts || {};
+  const cur = aiCfg().provider;
+  const order = [cur].concat(Object.keys(AI_PRESETS).filter(p => p !== cur));
+  let lastErr = null;
+  for (let i = 0; i < order.length; i++) {
+    const p = order[i];
+    const cfg = { provider: p, baseUrl: AI_PRESETS[p].baseUrl, model: aiGetModel(p), key: aiGetKey(p) };
+    if (!cfg.key) continue;
+    if (i > 0) {
+      if (opts.onReset) opts.onReset();
+      toast("AI 主通道不可用，已自动切换 " + AI_PRESETS[p].name);
+    }
+    const r = await callLLMOnce(cfg, messages, opts);
+    if (!r.error) return r;
+    lastErr = r;
+  }
+  return lastErr;
 }
 function findQById(id) {
   for (const sub of ["economy", "business"]) {
@@ -1304,7 +1441,7 @@ function aiBoxShell(box, title) {
 }
 function aiLoading(body) { body.innerHTML = `<div class="ai-loading"><span class="spin"></span> AI 正在思考…</div>`; }
 function aiErr(body, e) {
-  const hints = { nokey: "未配置 API Key：去「设置 → AI 讲解」粘贴对应平台的 Key。", net: "网络/CORS 失败：多为 Key 无效或浏览器拦截，请检查 Key。", http: `接口返回 ${e.status}：${e.msg || ""}`, parse: "返回内容无法解析。", json: "AI 未按要求返回 JSON，已按原文展示。", empty: "AI 返回为空。" };
+  const hints = { nokey: "未配置 API Key：去「设置 → AI 讲解」粘贴对应平台的 Key。", net: "网络/CORS 失败：多为 Key 无效或浏览器拦截，请检查 Key。", http: `接口返回 ${e.status}：${e.msg || ""}`, parse: "返回内容无法解析。", json: "AI 未按要求返回 JSON，已按原文展示。", empty: "AI 返回为空。", timeout: "请求超时（90 秒），已自动尝试备用通道；若仍失败请稍后再试。" };
   body.innerHTML = `<div class="ai-err">⚠️ ${hints[e.error] || "调用失败"}</div>` + (e.content ? `<div class="ai-raw">${esc(e.content)}</div>` : "");
 }
 function aiExplainBtn(qid, force) {
@@ -1319,7 +1456,11 @@ function aiExplainBtn(qid, force) {
   aiLoading(body);
   const optText = (ctx.options || []).map(o => "  " + o).join("\n");
   const user = `【题目】${ctx.stem}\n【选项】\n${optText}\n【标准答案】${ctx.answer.join("、")}\n【官方解析】${ctx.explanation || "（无）"}\n\n请作为老师严格核验：用大白话+一个生活例子讲透考点，并编一句口诀。\n若你认为上方【标准答案】有误，请在 sourceWrong 填 true，并给出 correctAnswer（如 "A" 或 "AC"）和 correctOptions（与原选项同格式数组）；若正确则 sourceWrong 填 false。\n只返回 JSON：{"explain":"...","mnemonic":"...","pitfall":"...","sourceWrong":false,"correctAnswer":"","correctOptions":null}。`;
-  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], { json: true }).then(r => {
+  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], {
+    json: true,
+    onToken: (t, full) => { body.innerHTML = `<div class="ai-stream">${esc(full)}</div>`; },
+    onReset: () => { body.innerHTML = `<div class="ai-loading"><span class="spin"></span> 切换备用通道重试…</div>`; }
+  }).then(r => {
     if (r.error) { aiErr(body, r); return; }
     renderExplainResult(body, r.content, false, qid);
     saveCorrection(qid, r.content);
@@ -1348,7 +1489,11 @@ function aiDiagnoseBtn(qid) {
   aiLoading(body);
   const optText = (w.options || []).map(o => "  " + o).join("\n");
   const user = `【题目】${w.stem}\n【选项】\n${optText}\n【你选了】${w.yourWrong}（这是错的）\n【正确答案】${w.answer}\n\n请像老师一样，用大白话分三点说明：① 我为什么会选错（常见误区是什么）；② 正确答案为什么对；③ 以后怎么避开这个坑。简洁、直击痛点。`;
-  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], { temperature: 0.5 }).then(r => {
+  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], {
+    temperature: 0.5,
+    onToken: (t, full) => { body.innerHTML = `<div class="ai-sec"><p>${esc(full)}</p></div>`; },
+    onReset: () => { body.innerHTML = `<div class="ai-loading"><span class="spin"></span> 切换备用通道重试…</div>`; }
+  }).then(r => {
     if (r.error) { aiErr(body, r); return; }
     const badge = body.parentElement.querySelector("#aiBadge");
     if (badge) badge.innerHTML = `<span class="ai-badge ok">已诊断</span>`;
@@ -1364,7 +1509,11 @@ function aiSimilarBtn(qid) {
   aiLoading(body);
   const optText = (ctx.options || []).map(o => "  " + o).join("\n");
   const user = `基于下面这道真题的考点，出一道新的、不重复的同类练习题（题型可同可不同）。\n【原题】${ctx.stem}\n【原选项】${optText}\n【原答案】${ctx.answer.join("、")}\n\n返回 JSON：{"type":"single或multiple","stem":"题干","options":["A ...","B ...","C ...","D ..."],"answer":["A"],"explanation":"简短解析"}。只返回 JSON，选项必须以 A/B/C/D 开头。`;
-  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], { json: true }).then(r => {
+  callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], {
+    json: true,
+    onToken: (t, full) => { body.innerHTML = `<div class="ai-stream">${esc(full)}</div>`; },
+    onReset: () => { body.innerHTML = `<div class="ai-loading"><span class="spin"></span> 切换备用通道重试…</div>`; }
+  }).then(r => {
     if (r.error) { aiErr(body, r); return; }
     const d = r.content;
     if (!d || !Array.isArray(d.options)) { aiErr(body, { error: "json", content: (typeof d === "string" ? d : JSON.stringify(d)) }); return; }
@@ -1413,15 +1562,17 @@ function renderAISettings() {
   const opts = Object.keys(AI_PRESETS).map(k => `<option value="${k}" ${k === p ? "selected" : ""}>${AI_PRESETS[k].name}</option>`).join("");
   return `<div class="card">
     <h2>🤖 AI 讲解（浏览器直连大模型）</h2>
-    <p class="muted">密钥仅存本机浏览器（localStorage），<b>不会</b>随 GitHub 备份上传。支持 硅基流动 / Agnes 直连，无需代理。</p>
+    <p class="muted">密钥仅存本机浏览器（localStorage），<b>不会</b>随 GitHub 备份上传。支持 智谱 / 硅基流动 / Agnes 直连，慢或连不上时自动切换备用通道。</p>
     <label>默认模型</label>
     <select id="aiProv">${opts}</select>
     <label>API Key（对应上面选中的模型）</label>
     <input id="aiKey" type="password" placeholder="粘贴对应平台的 Key（Agnes 免费，可留空试）">
     <p class="muted" id="aiKeyHint"></p>
     <label>自定义模型名（可选，留空用默认）</label>
-    <input id="aiModel" placeholder="如 glm-4-flash / deepseek-ai/DeepSeek-V4-Flash">
-    <p class="muted">Key 获取：硅基流动 siliconflow.cn ｜ Agnes apihub.agnes-ai.com</p>
+    <input id="aiModel" placeholder="如 glm-4.6v / deepseek-ai/DeepSeek-V4-Flash">
+    <label>AI CORS 代理地址（可选，留空=直连）</label>
+    <input id="aiProxy" placeholder="如 https://proxy.hellohopo.dpdns.org/ （填了走 代理?url=目标）" value="${esc(state.settings.aiProxy || '')}">
+    <p class="muted">海外接口（如 Agnes）国内直连不稳时，填你自己的 CORS 代理可显著改善；国内接口（智谱/硅基流动）直连即可，可不填。</p>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="saveAISet()">保存</button>
       <button class="btn g" onclick="testAICall()">测试连接</button>
@@ -1434,12 +1585,13 @@ function loadAIKeyInput() {
   const k = document.getElementById("aiKey"), m = document.getElementById("aiModel"), h = document.getElementById("aiKeyHint");
   if (k) k.value = aiGetKey(p);
   if (m) m.value = aiGetModel(p);
-  if (h) { const hint = { qwen35: "硅基流动 Key 以 sk- 开头", siliconflow: "硅基流动 Key 以 sk- 开头", agnes: "Agnes 免费 Key（apihub 申请），也可留空" }; h.textContent = hint[p] || ""; }
+  if (h) { const hint = { zhipu: "智谱开放平台 Key（{id}.{secret} 格式，open.bigmodel.cn）", siliconflow: "硅基流动 Key 以 sk- 开头", agnes: "Agnes 免费 Key（apihub 申请），也可留空" }; h.textContent = hint[p] || ""; }
 }
 window.saveAISet = function () {
   const pv = document.getElementById("aiProv"); if (!pv) return;
   const p = pv.value;
   state.settings.aiProvider = p;
+  state.settings.aiProxy = (document.getElementById("aiProxy").value || "").trim();
   localStorage.setItem(aiStore(p), (document.getElementById("aiKey").value || "").trim());
   localStorage.setItem(aiModelStore(p), (document.getElementById("aiModel").value || "").trim());
   saveSettings();
