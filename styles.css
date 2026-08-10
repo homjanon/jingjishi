@@ -55,6 +55,9 @@ h3{font-size:15px;margin:14px 0 6px;}
 .gfile:hover{border-color:var(--blue);}
 .gfile input{width:auto;margin:0;flex:none;}
 .ai-stream{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.7;background:var(--blue-l);border-radius:8px;padding:10px 12px;margin-top:10px;}
+.wselbox{display:inline-flex;align-items:center;margin:0 6px 0 0;vertical-align:middle;}
+.wselbox input{width:auto;margin:0;flex:none;}
+.pill.bad{background:#FCEBEB;color:var(--red);border:1px solid var(--red);}
 .stat{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;}
 .stat .box{flex:1;min-width:110px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;}
 .stat .box b{display:block;font-size:22px;color:var(--blue-d);}
