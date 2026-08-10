@@ -37,15 +37,35 @@ async function saveCorrections() { await dbSet('corrections', state.corrections)
 async function saveSession() { await dbSet('session', state.session); }
 
 /* ---------------- 数据加载 ---------------- */
+/** 数据加载（C 方案：cors 代理主 → jsdelivr 兜底 → 同站兜底） */
+function dataSources(name){
+  const raw = 'https://raw.githubusercontent.com/homjanon/jingjishi/main/data/' + name;
+  return [
+    'https://proxy.hellohopo.dpdns.org/?url=' + encodeURIComponent(raw),  // ① cors 代理主
+    'https://cdn.jsdelivr.net/gh/homjanon/jingjishi@main/data/' + name,   // ② jsdelivr 兜底
+    'data/' + name                                                         // ③ 同站兜底
+  ];
+}
+async function fetchJsonFallback(name){
+  let lastErr = null;
+  for(const url of dataSources(name)){
+    try{
+      const r = await fetch(url, {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('全部数据源失败: '+name);
+}
 async function loadData() {
   // 版本号破坏缓存：data/*.json 带 ?v，确保部署后浏览器拉到最新 app.js/plan.json/questions.json
   const v = (document.querySelector('meta[name="app-version"]') || {}).content || '';
   const qs = v ? ('?v=' + v) : '';
   const [q, p, n, pat] = await Promise.all([
-    fetch('data/questions.json' + qs).then(r => r.json()),
-    fetch('data/plan.json' + qs).then(r => r.json()),
-    fetch('data/notes.json' + qs).then(r => r.json()),
-    fetch('data/patches.json' + qs).then(r => r.json()).catch(() => ({}))
+    fetchJsonFallback('questions.json' + qs),
+    fetchJsonFallback('plan.json' + qs),
+    fetchJsonFallback('notes.json' + qs),
+    fetchJsonFallback('patches.json' + qs).catch(() => ({}))
   ]);
   DATA.questions = q; DATA.plan = p; DATA.notes = n; DATA.patches = pat || {};
 }
