@@ -277,6 +277,47 @@ function gradeWrong(w, correct) {
   saveWrong();
 }
 function removeWrong(qid) { state.wrong = state.wrong.filter(w => w.qid !== qid); saveWrong(); }
+/* 识别"无法作答"的错题：① 关联到的材料题本身材料缺失（如「案例（四）(材料缺失)」）；
+   ② 疑似案例子题但关联不到材料（快照缺 subject/chapterId 或题库无该材料）。
+   材料题自身（题干以「案例（N）」开头）不算——它有完整题干/选项可作答 */
+function isUnanswerable(w) {
+  if (!w) return false;
+  const stem = w.stem || '';
+  if (/^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim()) || /案例[（(]?[一二三四五六七八九十\d]/.test(stem.slice(0, 10))) return false;
+  const m = findCaseMaterial(w.subject, w.chapterId, w.qid);
+  if (m) return /材料缺失|（材料|\(材料/.test(m.stem || '');
+  return /案例\s*[（(]?[一二三四五六七八九十\d]|根据上述|上述案例|该企业|该公司|该产品|该款/.test(stem);
+}
+window.toggleAllSel = function () {
+  const boxes = app.querySelectorAll('.wsel');
+  if (!boxes.length) return;
+  const allOn = [...boxes].every(b => b.checked);
+  boxes.forEach(b => b.checked = !allOn);
+  updateSelCount();
+};
+window.updateSelCount = function () {
+  const n = app.querySelectorAll('.wsel:checked').length;
+  const el = document.getElementById('selCount');
+  if (el) el.textContent = n;
+};
+window.rmWrongBatch = function () {
+  const qids = [...app.querySelectorAll('.wsel:checked')].map(b => b.dataset.qid);
+  if (!qids.length) { toast('请先勾选要删除的错题'); return; }
+  if (!confirm('确定删除所选 ' + qids.length + ' 道错题？')) return;
+  const set = new Set(qids);
+  state.wrong = state.wrong.filter(w => !set.has(w.qid));
+  saveWrong(); renderWrong();
+  toast('已删除 ' + qids.length + ' 道错题');
+};
+window.rmUnanswerable = function () {
+  const bad = state.wrong.filter(isUnanswerable);
+  if (!bad.length) { toast('没有识别到无法作答的题'); return; }
+  if (!confirm('确定删除 ' + bad.length + ' 道「无材料 / 无法作答」的错题？')) return;
+  const set = new Set(bad.map(w => w.qid));
+  state.wrong = state.wrong.filter(w => !set.has(w.qid));
+  saveWrong(); renderWrong();
+  toast('已删除 ' + bad.length + ' 道无法作答题');
+};
 function markStudy(chapterKey) {
   const today = localToday();
   state.progress.done = state.progress.done || {};
@@ -859,6 +900,7 @@ function renderQuizSummary() {
 function renderWrong() {
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
   const dueList = state.wrong.filter(isDue);
+  const unCount = state.wrong.filter(isUnanswerable).length;
   const sortMode = state.settings.wrongSort || 'rand';
   const sortBtn = m => `<button class="btn ghost ${sortMode === m ? 'sel' : ''}" onclick="setWrongSort('${m}')">${m === 'rand' ? '🎲 随机' : m === 'new' ? '🕐 最新在前' : '🕐 最早在前'}</button>`;
   const header = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
@@ -871,6 +913,11 @@ function renderWrong() {
     <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <span class="muted" style="font-size:13px">排序：</span>${sortBtn('rand')}${sortBtn('new')}${sortBtn('old')}
       <span class="muted" style="font-size:12px">${sortMode === 'rand' ? '随机打乱，待复习题置顶' : ''}</span>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px">
+      <button class="btn ghost" onclick="toggleAllSel()">☐ 全选</button>
+      <button class="btn" onclick="rmWrongBatch()">🗑 删除所选（<span id="selCount">0</span>）</button>
+      ${unCount ? `<button class="btn" style="color:var(--red)" onclick="rmUnanswerable()">⚠️ 一键删除无法作答（${unCount}）</button>` : ''}
     </div></div>`;
   let list = state.wrong.slice();
   if (sortMode === 'rand') {
@@ -889,9 +936,10 @@ function renderWrong() {
     const dispAnswer = (corr && corr.answer) ? corr.answer : w.answer;
     const dispExpl = (corr && corr.explanation) ? corr.explanation : w.explanation;
     const corrBadge = (corr && corr.corrected) ? ` <span class="pill a">AI已修正</span>` : '';
+    const unBadge = isUnanswerable(w) ? ` <span class="pill bad">⚠️ 无材料·无法作答</span>` : '';
     return `
     <div class="q">
-      <div class="meta">${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}</div>
+      <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}</div>
       ${caseMaterialHtml(w.subject, w.chapterId, w.qid)}
       <div class="stem">${esc(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(dispAnswer)} ${corrBadge}</div>
