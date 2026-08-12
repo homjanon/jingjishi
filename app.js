@@ -784,7 +784,7 @@ function renderQuiz() {
     return '';
   })();
   app.innerHTML = `<div class="card">
-    <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${quiz.idx + 1}/${quiz.queue.length}</span></div>
+    <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${subjectPill(subOf(quiz.queue[quiz.idx]))} ${quiz.idx + 1}/${quiz.queue.length}</span></div>
     <div class="q"><div class="qtype">${typeBadge(q.type)}${corrBadge}${caseLink}</div><div class="stem">${esc(q.stem)}</div>${opts}
       ${submitBtnHtml}
       <div class="explain" id="explain"></div>
@@ -989,7 +989,7 @@ function redoWrong(qid) {
   const opts = (corr && corr.options) ? corr.options : (w.options || []);
   const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
   const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
-  app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
+  app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">${subjectPill(subOf(w))} ❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
     <div class="q"><div class="qtype">${typeBadge(q.type)}</div>${caseMaterialHtml(w.subject, w.chapterId, w.qid)}<div class="stem">${esc(q.stem)}</div>
     ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
