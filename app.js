@@ -277,6 +277,19 @@ function gradeWrong(w, correct) {
   saveWrong();
 }
 function removeWrong(qid) { state.wrong = state.wrong.filter(w => w.qid !== qid); saveWrong(); }
+/* 科目名映射：economy=经济基础（蓝 pill）/ business=工商管理（绿 pill.g）/ 未知=灰 */
+function subjectName(subject) { return subject === 'economy' ? '经济基础' : subject === 'business' ? '工商管理' : '未知科目'; }
+function subjectPill(subject) { return subject === 'economy' ? '<span class="pill">经济基础</span>' : subject === 'business' ? '<span class="pill g">工商管理</span>' : '<span class="pill">未知</span>'; }
+/* 错题归属科目：快照 subject 优先；缺失时按 qid 反查题库补全；查不到返回 null */
+function subOf(w) {
+  if (!w) return null;
+  if (w.subject === 'economy' || w.subject === 'business') return w.subject;
+  for (const sub of ["economy", "business"]) {
+    const s = DATA.questions[sub];
+    if (s && s.chapters.some(c => c.questions && c.questions.some(x => x.id === w.qid))) return sub;
+  }
+  return null;
+}
 /* 识别"无法作答"的错题：① 关联到的材料题本身材料缺失（如「案例（四）(材料缺失)」）；
    ② 疑似案例子题但关联不到材料（快照缺 subject/chapterId 或题库无该材料）。
    材料题自身（题干以「案例（N）」开头）不算——它有完整题干/选项可作答 */
@@ -902,13 +915,20 @@ function renderWrong() {
   const dueList = state.wrong.filter(isDue);
   const unCount = state.wrong.filter(isUnanswerable).length;
   const sortMode = state.settings.wrongSort || 'rand';
+  const subFilter = state.settings.wrongSub || 'all';   // all / economy / business（临时筛选）
+  const cntE = state.wrong.filter(w => subOf(w) === 'economy').length;
+  const cntB = state.wrong.filter(w => subOf(w) === 'business').length;
   const sortBtn = m => `<button class="btn ghost ${sortMode === m ? 'sel' : ''}" onclick="setWrongSort('${m}')">${m === 'rand' ? '🎲 随机' : m === 'new' ? '🕐 最新在前' : '🕐 最早在前'}</button>`;
+  const subBtn = (v, label) => `<button class="btn ghost ${subFilter === v ? 'sel' : ''}" onclick="setWrongSub('${v}')">${label}</button>`;
   const header = `<div class="card"><div class="row"><h2>错题库（${state.wrong.length}）</h2>
       <button class="btn ghost" onclick="clearWrong()">清空</button></div>
     <p class="muted">长期保存 · 按艾宾浩斯记忆曲线自动排程。今日待复习 <b style="color:var(--red)">${dueList.length}</b> 题。AI 修正过的题会标「AI已修正」。</p>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" onclick="startWrongDue()">📌 复习待做（${dueList.length}）</button>
       <button class="btn g" onclick="startWrongAll()">🔁 全部重做（${state.wrong.length}）</button>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <span class="muted" style="font-size:13px">科目：</span>${subBtn('all', '全部')}${subBtn('economy', `经济基础（${cntE}）`)}${subBtn('business', `工商管理（${cntB}）`)}
     </div>
     <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <span class="muted" style="font-size:13px">排序：</span>${sortBtn('rand')}${sortBtn('new')}${sortBtn('old')}
@@ -920,6 +940,7 @@ function renderWrong() {
       ${unCount ? `<button class="btn" style="color:var(--red)" onclick="rmUnanswerable()">⚠️ 一键删除无法作答（${unCount}）</button>` : ''}
     </div></div>`;
   let list = state.wrong.slice();
+  if (subFilter !== 'all') list = list.filter(w => subOf(w) === subFilter);
   if (sortMode === 'rand') {
     const due = list.filter(isDue), rest = list.filter(w => !isDue(w));
     shuffleArr(due); shuffleArr(rest);
@@ -937,9 +958,10 @@ function renderWrong() {
     const dispExpl = (corr && corr.explanation) ? corr.explanation : w.explanation;
     const corrBadge = (corr && corr.corrected) ? ` <span class="pill a">AI已修正</span>` : '';
     const unBadge = isUnanswerable(w) ? ` <span class="pill bad">⚠️ 无材料·无法作答</span>` : '';
+    const subPill = subjectPill(subOf(w));
     return `
     <div class="q">
-      <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}</div>
+      <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${subPill}${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}</div>
       ${caseMaterialHtml(w.subject, w.chapterId, w.qid)}
       <div class="stem">${esc(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(dispAnswer)} ${corrBadge}</div>
@@ -956,6 +978,7 @@ function renderWrong() {
   app.innerHTML = header + items;
 }
 window.setWrongSort = function (m) { state.settings.wrongSort = m; saveSettings(); renderWrong(); };
+window.setWrongSub = function (v) { state.settings.wrongSub = v; saveSettings(); renderWrong(); };
 window.rmWrong = function (qid) { removeWrong(qid); renderWrong(); };
 window.clearWrong = function () { if (confirm('确定清空全部错题？')) { state.wrong = []; saveWrong(); renderWrong(); } };
 
