@@ -755,6 +755,36 @@ function optHtml(options, t) {
   const cls = isMulti(t) ? 'opt multi' : 'opt';
   return options.map((o, i) => `<button class="${cls}" data-i="${i}">${esc(o)}</button>`).join('');
 }
+/* 判分（2026-08-14 升级，考试口径）：单选=全对；多选=每题 2 分、错选 0 分、少选每对项 0.5 分，
+   「得分≥50% 即判正确」⇔ 无错选 且 选对 ≥2 项。selLetters 为作答字母数组（如 ["A","C"]）。 */
+function multiPass(q, selLetters) {
+  const ans = normAnswer(q.answer);
+  if (!ans.length || !selLetters || !selLetters.length) return false;
+  if (!isMulti(q.type)) return selLetters.slice().sort().join('') === ans.slice().sort().join('');
+  if (selLetters.some(l => !ans.includes(l))) return false;   // 错选 → 0 分
+  return selLetters.length >= 2;                               // 无错选且选对≥2 → ≥50%
+}
+/* 存量多选错题重判：错题快照存了 yourWrong（进错题库那次的作答字母），用新规则重判；
+   应判对（得分≥50%）→ 移出错题库；缺作答记录的维持现状。幂等。返回恢复数量。 */
+function auditWrongMulti(silent) {
+  if (!state.wrong || !state.wrong.length) return 0;
+  let restored = 0;
+  const kept = [];
+  for (const w of state.wrong) {
+    if (isMulti(w.type) && w.yourWrong) {
+      const letters = String(w.yourWrong).split(/[、，,]/).map(s => s.trim().toUpperCase()).filter(Boolean);
+      const q = findQById(w.qid);
+      if (letters.length && q && multiPass(q, letters)) { restored++; continue; }
+    }
+    kept.push(w);
+  }
+  if (restored) {
+    state.wrong = kept;
+    saveWrong();
+    if (!silent) toast(`按新规则（多选≥50%）恢复 ${restored} 道错题`);
+  }
+  return restored;
+}
 
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
@@ -842,7 +872,7 @@ function onPick(b, q) {
   submitBtn.textContent = submitLabel(q.type, sel.size);
 }
 function onSubmit(q) {
-  const correct = [...sel].map(i => q.options[i][0]).sort().join('') === normAnswer(q.answer).slice().sort().join('');
+  const correct = multiPass(q, [...sel].map(i => q.options[i][0]));
   const explain = document.getElementById('explain');
   app.querySelectorAll('.opt').forEach((b, i) => {
     const letter = q.options[i][0];
@@ -851,7 +881,7 @@ function onSubmit(q) {
     else b.classList.add('dim');
     b.disabled = true;
   });
-  explain.innerHTML = `<b>答案：</b>${normAnswer(q.answer).join('、')}　|　<b>解析：</b>${esc(q.explanation)}`;
+  explain.innerHTML = `<b>答案：</b>${normAnswer(q.answer).join('、')}　|　<b>解析：</b>${esc(q.explanation)}${correct && isMulti(q.type) && sel.size < normAnswer(q.answer).length ? '　<span style="color:var(--amber-d)">✅ 得分≥50%（少选），建议回看补全其余正确项</span>' : ''}`;
   explain.classList.add('show');
   document.getElementById('submitBtn').style.display = 'none';
   const item = quiz.queue[quiz.idx];
@@ -911,6 +941,7 @@ function renderQuizSummary() {
 
 /* ---------------- 视图：错题库 ---------------- */
 function renderWrong() {
+  auditWrongMulti(true);   // 进错题库再审计一次（幂等，静默；恢复后继续用新列表渲染）
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
   const dueList = state.wrong.filter(isDue);
   const unCount = state.wrong.filter(isUnanswerable).length;
@@ -1011,7 +1042,7 @@ function redoWrong(qid) {
     document.getElementById('redoSubmit').textContent = submitLabel(q.type, rsel.size, '提交');
   });
   document.getElementById('redoSubmit').onclick = () => {
-    const correct = [...rsel].map(i => q.options[i][0]).sort().join('') === normAnswer(q.answer).slice().sort().join('');
+    const correct = multiPass(q, [...rsel].map(i => q.options[i][0]));
     const ex = document.getElementById('redoExplain');
     optEls.forEach((b, i) => {
       const letter = q.options[i][0];
@@ -1632,7 +1663,7 @@ function renderSimilarQuiz(body, data, qid) {
     root.querySelector("#simSubmit").textContent = submitLabel(data.type, ssel.size, "提交");
   });
   root.querySelector("#simSubmit").onclick = () => {
-    const correct = [...ssel].map(i => data.options[i][0]).sort().join("") === normAnswer(data.answer).slice().sort().join("");
+    const correct = multiPass(data, [...ssel].map(i => data.options[i][0]));
     root.querySelectorAll(".opt").forEach((b, i) => { const L = data.options[i][0]; if (data.answer.includes(L)) b.classList.add("correct"); else if (ssel.has(i)) b.classList.add("wrong"); else b.classList.add("dim"); b.disabled = true; });
     const ex = root.querySelector("#simExpl"); ex.innerHTML = `<b>答案：</b>${normAnswer(data.answer).join("、")}　|　<b>解析：</b>${esc(data.explanation || "")}`; ex.classList.add("show"); root.querySelector("#simSubmit").style.display = "none";
   };
@@ -1710,6 +1741,7 @@ window.discardSession = discardSession;
   catch (err) { app.innerHTML = `<div class="card empty">⚠️ 数据加载失败。<br>请用本地服务器访问（如 <code>python -m http.server</code>），或直接部署到 GitHub Pages，<br>不能用 file:// 直接打开。</div>`; return; }
   await loadState();
   migrateWrong();
+  auditWrongMulti();        // 存量多选错题按新规则（≥50%）重判，应判对的自动恢复
   validateSession(false);   // 启动即自愈：清理上次遗留的孤儿会话
   router();
 })();
