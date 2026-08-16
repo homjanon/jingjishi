@@ -824,6 +824,7 @@ function renderQuiz() {
     <div id="nav" style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn ghost" id="prevBtn" ${quiz.idx > 0 ? '' : 'disabled'}>‹ 上一题</button>
       <button class="btn ghost" id="nextBtn">下一题 ›</button>
+      ${quiz.fromWrong ? `<button class="btn" style="color:var(--red)" onclick="delWrongInQuiz('${q.id}')">🗑 删除此题</button>` : ''}
       <span class="muted" style="margin-left:auto;font-size:12px">可直接跳转；已提交的题可回看，未提交的回头再答</span>
     </div>
   </div>`;
@@ -1013,6 +1014,26 @@ window.setWrongSort = function (m) { state.settings.wrongSort = m; saveSettings(
 window.setWrongSub = function (v) { state.settings.wrongSub = v; saveSettings(); renderWrong(); };
 window.rmWrong = function (qid) { removeWrong(qid); renderWrong(); };
 window.clearWrong = function () { if (confirm('确定清空全部错题？')) { state.wrong = []; saveWrong(); renderWrong(); } };
+/* 答题页删除当前错题：从错题库移除 + 从当前队列剔除（删完队列空则返回） */
+window.delWrongInQuiz = function (qid) {
+  if (!confirm('确定删除这道错题？删除后不再出现在错题库和复习中。')) return;
+  removeWrong(qid);
+  const i = quiz.queue.findIndex(it => it.q && it.q.id === qid);
+  if (i >= 0) quiz.queue.splice(i, 1);
+  if (i < quiz.idx) quiz.idx--;
+  if (state.session) { state.session.items = quiz.queue.map(it => ({ subject: it.subject, chapterId: it.chapterId, qid: it.q.id })); state.session.idx = quiz.idx; saveSession(); }
+  toast('已删除该错题');
+  if (!quiz.queue.length) { state.session = null; saveSession(); router(); return; }
+  if (quiz.idx >= quiz.queue.length) quiz.idx = quiz.queue.length - 1;
+  renderQuiz();
+};
+/* 单题重做页删除 */
+window.delWrongSingle = function (qid) {
+  if (!confirm('确定删除这道错题？删除后不再出现在错题库和复习中。')) return;
+  removeWrong(qid);
+  toast('已删除该错题');
+  renderWrong();
+};
 
 function redoWrong(qid) {
   const w = state.wrong.find(x => x.qid === qid);
@@ -1025,6 +1046,7 @@ function redoWrong(qid) {
     <div class="q"><div class="qtype">${typeBadge(q.type)}</div>${caseMaterialHtml(w.subject, w.chapterId, w.qid)}<div class="stem">${esc(q.stem)}</div>
     ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
+    <button class="btn" style="color:var(--red)" onclick="delWrongSingle('${qid}')">🗑 删除此题</button>
     <div class="explain" id="redoExplain"></div></div>
     <div id="redoNav" style="margin-top:10px"></div></div>`;
   let rsel = new Set();
