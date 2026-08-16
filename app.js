@@ -1577,7 +1577,7 @@ function aiExplainBtn(qid, force) {
   }
   aiLoading(body);
   const optText = (ctx.options || []).map(o => "  " + o).join("\n");
-  const user = `【题目】${ctx.stem}\n【选项】\n${optText}\n【标准答案】${ctx.answer.join("、")}\n【官方解析】${ctx.explanation || "（无）"}\n\n请作为老师严格核验：用大白话+一个生活例子讲透考点，并编一句口诀。\n若你认为上方【标准答案】有误，请在 sourceWrong 填 true，并给出 correctAnswer（如 "A" 或 "AC"）和 correctOptions（与原选项同格式数组）；若正确则 sourceWrong 填 false。\n只返回 JSON：{"explain":"...","mnemonic":"...","pitfall":"...","sourceWrong":false,"correctAnswer":"","correctOptions":null}。`;
+  const user = `【题目】${ctx.stem}\n【选项】\n${optText}\n【标准答案】${ctx.answer.join("、")}\n【官方解析】${ctx.explanation || "（无）"}\n\n请作为老师严格核验：用大白话+一个生活例子讲透考点，并编一句口诀。\n若你认为上方【标准答案】有误，请在 sourceWrong 填 true，并给出 correctAnswer（如 "A" 或 "AC"）和 correctOptions（与原选项同格式数组）；且此时大白话（explain）必须**以「正确答案应为：X」开头**，先说清修正成什么再展开讲解；若正确则 sourceWrong 填 false。\n只返回 JSON：{"explain":"...","mnemonic":"...","pitfall":"...","sourceWrong":false,"correctAnswer":"","correctOptions":null}。`;
   callLLM([{ role: "system", content: AI_TEACHER_SYS }, { role: "user", content: user }], {
     json: true,
     onToken: (t, full) => { body.innerHTML = `<div class="ai-stream">${esc(full)}</div>`; },
@@ -1594,7 +1594,29 @@ function renderExplainResult(body, d, baked, qid) {
   const corrected = d && d.sourceWrong;
   const badge = body.parentElement.querySelector("#aiBadge");
   if (badge) badge.innerHTML = corrected ? `<span class="ai-badge" style="background:var(--red)">已修正答案</span>` : (baked ? `<span class="ai-badge ok">离线缓存</span>` : `<span class="ai-badge ok">已生成</span>`);
+  // 修正答案高亮区块：AI 判定原答案有误时，固定展示"修正成什么"（不依赖大白话是否提及）
+  const fixBlock = (() => {
+    if (!corrected) return '';
+    let ans = [];
+    if (d.correctAnswer) ans = normAnswer(d.correctAnswer);
+    else if (state.corrections[qid] && state.corrections[qid].answer) ans = normAnswer(state.corrections[qid].answer);
+    if (!ans.length) return `<div class="ai-fix"><b>⚠️ 已判定原答案有误，但未提供新答案</b> —— 建议点「🔄 重新生成」再试。</div>`;
+    let optTxt = '';
+    if (Array.isArray(d.correctOptions) && d.correctOptions.length >= 2) {
+      optTxt = d.correctOptions.map(o => esc(o)).join('<br>');
+    } else {
+      const src = findQById(qid);
+      if (src && src.options) {
+        optTxt = ans.map(a => {
+          const o = src.options.find(x => String(x || '').trim().toUpperCase().indexOf(a) === 0);
+          return o ? esc(o) : a;
+        }).join('<br>');
+      }
+    }
+    return `<div class="ai-fix"><b>✅ 修正后答案：${esc(ans.join('、'))}</b>${optTxt ? `<div class="ai-fix-opts">${optTxt}</div>` : ''}</div>`;
+  })();
   body.innerHTML = `
+    ${fixBlock}
     ${d.explain ? `<div class="ai-sec"><b>📘 大白话</b><p>${esc(d.explain)}</p></div>` : ""}
     ${d.mnemonic ? `<div class="ai-sec"><b>🔑 记忆口诀</b><p class="mnem">${esc(d.mnemonic)}</p></div>` : ""}
     ${d.pitfall ? `<div class="ai-sec"><b>⚠️ 易错提醒</b><p>${esc(d.pitfall)}</p></div>` : ""}
