@@ -299,7 +299,8 @@ function isUnanswerable(w) {
   if (/^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim()) || /案例[（(]?[一二三四五六七八九十\d]/.test(stem.slice(0, 10))) return false;
   const m = findCaseMaterial(w.subject, w.chapterId, w.qid);
   if (m) return /材料缺失|（材料|\(材料/.test(m.stem || '');
-  return /案例\s*[（(]?[一二三四五六七八九十\d]|根据上述|上述案例|该企业|该公司|该产品|该款/.test(stem);
+  // 找不到材料：题干以「该…为( )」开头（强指代前文、悬空引用）或含案例/主体引用词 → 视为无法作答
+  return /^该[^，。]{0,12}[为是]\(/.test(stem.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]|根据上述|上述案例|该企业|该公司|该产品|该款/.test(stem);
 }
 window.toggleAllSel = function () {
   const boxes = app.querySelectorAll('.wsel');
