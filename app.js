@@ -786,6 +786,29 @@ function auditWrongMulti(silent) {
   }
   return restored;
 }
+/* 订正后冤案自动恢复：错题快照存的 yourWrong（进错题库那次的作答）若等于「当前生效答案」
+   （题库 + patches + 本机订正应用后），说明该题答案后来被订正成用户当初的选择、
+   当时按旧答案被判错是"冤判" → 自动移出错题库。单选/多选通用，幂等。 */
+function auditWrongByCorrection(silent) {
+  if (!state.wrong || !state.wrong.length) return 0;
+  let restored = 0;
+  const kept = [];
+  for (const w of state.wrong) {
+    if (!w.yourWrong) { kept.push(w); continue; }
+    const q = findQById(w.qid);
+    if (!q) { kept.push(w); continue; }
+    const effAns = normAnswer(applyCorrections(q).answer).slice().sort();
+    const yourAns = normAnswer(String(w.yourWrong)).slice().sort();
+    if (effAns.length && JSON.stringify(effAns) === JSON.stringify(yourAns)) { restored++; continue; }
+    kept.push(w);
+  }
+  if (restored) {
+    state.wrong = kept;
+    saveWrong();
+    if (!silent) toast(`按订正恢复 ${restored} 道错题（你的作答即订正后答案）`);
+  }
+  return restored;
+}
 
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
@@ -944,6 +967,7 @@ function renderQuizSummary() {
 /* ---------------- 视图：错题库 ---------------- */
 function renderWrong() {
   auditWrongMulti(true);   // 进错题库再审计一次（幂等，静默；恢复后继续用新列表渲染）
+  auditWrongByCorrection(true);   // 订正后冤案同样静默审计
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
   const dueList = state.wrong.filter(isDue);
   const unCount = state.wrong.filter(isUnanswerable).length;
@@ -1787,6 +1811,7 @@ window.discardSession = discardSession;
   await loadState();
   migrateWrong();
   auditWrongMulti();        // 存量多选错题按新规则（≥50%）重判，应判对的自动恢复
+  auditWrongByCorrection(); // 答案被订正成你当初作答的"冤案"错题自动恢复
   validateSession(false);   // 启动即自愈：清理上次遗留的孤儿会话
   router();
 })();
