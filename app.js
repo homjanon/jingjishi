@@ -241,24 +241,29 @@ function toast(msg) {
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
 
 /* ---------------- 错题库 ---------------- */
-/* 找案例材料题：在所属章内向前 6 题扫「案例（N）」材料题；本题自己就是材料题则返回 null */
+/* 找案例材料题：在所属章内向前 6 题扫「案例（N）」材料题；本题自己就是材料题则返回 null
+   2026-09-03 收紧：仅认「题干以案例（N）开头」的材料题——防止题干中间含"案例"字样的
+   普通题被误判为材料题，导致独立单选/多选题错挂无关案例材料 */
 function findCaseMaterial(subject, chapterId, qid) {
   const ch = findChapter(subject, chapterId);
   if (!ch || !ch.questions) return null;
   const qs = ch.questions;
   const i = qs.findIndex(x => x.id === qid);
   if (i < 0) return null;
-  const isMat = s => /^案例\s*[（(]?[一二三四五六七八九十\d]/.test((s || '').trim()) || /案例[（(]?[一二三四五六七八九十\d]/.test((s || '').slice(0, 10));
+  const isMat = s => /^案例\s*[（(]?[一二三四五六七八九十\d]/.test((s || '').trim());
   if (isMat(qs[i].stem)) return null;                       // 自己就是材料题，无需回看
+  if (qs[i].standalone) return null;                        // 独立题：不属于任何案例组
   for (let k = i - 1; k >= 0 && i - k <= 6; k--) {
+    if (qs[k].standalone) return null;                      // 独立题边界：不属于任何案例组
     if (isMat(qs[k].stem)) return qs[k];
   }
   return null;
 }
-/* 案例材料折叠区 HTML（列表 / 单题重做通用；无材料返回空串） */
+/* 案例材料折叠区 HTML（列表 / 单题重做通用；无材料返回空串）
+   2026-09-03：材料内容含「材料缺失」占位时不再渲染折叠区（避免显示无关残缺文本） */
 function caseMaterialHtml(subject, chapterId, qid) {
   const m = findCaseMaterial(subject, chapterId, qid);
-  if (!m) return '';
+  if (!m || /材料缺失/.test(m.stem || '')) return '';
   const num = ((m.stem || '').match(/案例\s*[（(]?\s*([一二三四五六七八九十\d]+)/) || [])[1] || '';
   return `<details class="case-mat"><summary>📄 案例材料${num ? '（案例' + num + '）' : ''}</summary><div class="stem">${esc(m.stem)}</div></details>`;
 }
@@ -296,11 +301,12 @@ function subOf(w) {
 function isUnanswerable(w) {
   if (!w) return false;
   const stem = w.stem || '';
-  if (/^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim()) || /案例[（(]?[一二三四五六七八九十\d]/.test(stem.slice(0, 10))) return false;
+  if (/^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim())) return false;
   const m = findCaseMaterial(w.subject, w.chapterId, w.qid);
   if (m) return /材料缺失|（材料|\(材料/.test(m.stem || '');
-  // 找不到材料：题干以「该…为( )」开头（强指代前文、悬空引用）或含案例/主体引用词 → 视为无法作答
-  return /^该[^，。]{0,12}[为是]\(/.test(stem.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]|根据上述|上述案例|该企业|该公司|该产品|该款/.test(stem);
+  // 找不到材料：仅「该X…为/是(」强指代开头才判无法作答（2026-09-03 收紧——
+  // 题干中间含"该公司/该企业"属正常措辞，旧宽匹配曾对完整题干产生 90+ 误报）
+  return /^该[^，。]{0,12}[为是]\(/.test(stem.trim());
 }
 window.toggleAllSel = function () {
   const boxes = app.querySelectorAll('.wsel');
@@ -824,13 +830,14 @@ function renderQuiz() {
     ? '<span class="pill g" style="margin-right:6px">✅ 已提交</span>'
     : '<button class="btn g" id="submitBtn" disabled>提交答案</button>';
   // 案例材料回看：若当前题属于某个案例组（前面 6 题内存在「案例（N）」材料题）→ 提供回到材料题
+  // 2026-09-03 收紧：仅认「题干以案例（N）开头」的材料题，不再全文模糊匹配
   const caseLink = (() => {
     const stem = q.stem || '';
-    const selfIsCase = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem);
+    const selfIsCase = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim());
     if (answered || selfIsCase) return '';
     for (let k = quiz.idx - 1; k >= 0 && k >= quiz.idx - 6; k--) {
       const pk = quiz.queue[k].q.stem || '';
-      const isCaseHead = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk.trim()) || /案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk);
+      const isCaseHead = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk.trim());
       if (isCaseHead) {
         return `<a class="btn ghost" style="padding:4px 10px;font-size:12px;margin-left:8px" onclick="quizGo(${k})" title="回看本案例组的题干材料">📄 案例材料</a>`;
       }
