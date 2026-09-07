@@ -651,10 +651,18 @@ function renderToday() {
           <a class="btn ghost" href="#/wrong">去错题库</a>
         </div></div>`
     : `<div class="card review"><span class="pill g">错题复习</span><p class="muted">今日暂无到期错题，继续保持！错题库共 ${state.wrong.length} 题长期保存中。</p></div>`;
+  /* 2026变动考点专练入口（新增第6章质量管理/增值税法/新质生产力等，2026-09-07） */
+  const b23 = findChapter('business', 'b23'), e50 = findChapter('economy', 'e50');
+  const drillCard = (b23 || e50) ? `<div class="card review"><span class="pill a">🎯 2026变动考点专练</span>
+        <p>针对 2026 版教材/大纲变动的专项题：新增第6章「质量管理与安全生产管理」、增值税法、新质生产力、MFC=VMP、新公司法治理、创新模式新发展等。</p>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+          ${b23 && b23.questions ? `<a class="btn" href="#/quiz" data-sub="business" data-ch="b23">工商专练（${b23.questions.length}题）</a>` : ''}
+          ${e50 && e50.questions ? `<a class="btn" href="#/quiz" data-sub="economy" data-ch="e50">经济专练（${e50.questions.length}题）</a>` : ''}
+        </div></div>` : '';
   if (t.notStarted || t.finished) {
-    app.innerHTML = banner + reviewCard;
+    app.innerHTML = banner + resume + drillCard + reviewCard;
   } else {
-    app.innerHTML = banner + resume + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + reviewCard;
+    app.innerHTML = banner + resume + drillCard + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + reviewCard;
   }
 }
 /* 今日某科是否已完成：dayDone 优先，兜底为 progress.done 中任一带今天日期的 {科}:* 完成
