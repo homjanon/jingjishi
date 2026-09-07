@@ -338,6 +338,24 @@ window.rmUnanswerable = function () {
   saveWrong(); renderWrong();
   toast('已删除 ' + bad.length + ' 道无法作答题');
 };
+/* 按清单清理（2026-09-07）：粘贴 qid 清单批量删除过时错题 */
+window.rmWrongByList = function () {
+  const input = prompt('粘贴要删除的错题 qid 清单（逗号/空格/换行分隔均可）：');
+  if (!input) return;
+  const qids = input.split(/[,，、\s]+/).map(s => s.trim()).filter(Boolean);
+  if (!qids.length) { toast('清单为空'); return; }
+  const found = state.wrong.filter(w => qids.includes(w.qid));
+  if (!found.length) { toast('清单中没有匹配到当前错题'); return; }
+  const missing = qids.filter(q => !found.some(w => w.qid === q));
+  const msg = '清单 ' + qids.length + ' 个 qid，匹配到 ' + found.length + ' 道错题。\n'
+    + (missing.length ? '未匹配（将跳过）：' + missing.join('、') + '\n' : '')
+    + '\n确定删除这 ' + found.length + ' 道错题？';
+  if (!confirm(msg)) return;
+  const set = new Set(found.map(w => w.qid));
+  state.wrong = state.wrong.filter(w => !set.has(w.qid));
+  saveWrong(); renderWrong();
+  toast('已按清单删除 ' + found.length + ' 道错题');
+};
 function markStudy(chapterKey) {
   const today = localToday();
   state.progress.done = state.progress.done || {};
@@ -1010,6 +1028,7 @@ function renderWrong() {
       <button class="btn ghost" onclick="toggleAllSel()">☐ 全选</button>
       <button class="btn" onclick="rmWrongBatch()">🗑 删除所选（<span id="selCount">0</span>）</button>
       ${unCount ? `<button class="btn" style="color:var(--red)" onclick="rmUnanswerable()">⚠️ 一键删除无法作答（${unCount}）</button>` : ''}
+      <button class="btn ghost" onclick="rmWrongByList()">🧹 按清单清理</button>
     </div></div>`;
   let list = state.wrong.slice();
   if (subFilter !== 'all') list = list.filter(w => subOf(w) === subFilter);
