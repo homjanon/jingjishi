@@ -51,6 +51,10 @@ h3{font-size:15px;margin:14px 0 6px;}
 .case-mat summary::before{content:'▸ ';font-size:11px;}
 .case-mat[open] summary::before{content:'▾ ';}
 .case-mat .stem{margin-top:8px;font-size:14px;line-height:1.7;color:var(--text);}
+/* 答题页案例材料内嵌直显（2026-09-08）：默认展开、随题显示，无需跳转/点击 */
+.case-mat-inline{margin:0 0 10px;border:1px dashed var(--amber,#FFA94D);border-left:4px solid var(--amber,#FFA94D);border-radius:8px;padding:10px 12px;background:var(--amber-l);}
+.case-mat-inline .cm-title{font-size:13px;color:var(--amber-d);font-weight:600;margin-bottom:6px;}
+.case-mat-inline .cm-body{font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap;}
 .gfile{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;margin:6px 0;cursor:pointer;font-size:14px;background:#fff;}
 .gfile:hover{border-color:var(--blue);}
 .gfile input{width:auto;margin:0;flex:none;}
