@@ -842,6 +842,14 @@ function auditWrongByCorrection(silent) {
   return restored;
 }
 
+/* 案例材料内嵌直显（2026-09-08）：当前题属于某案例组时，直接在题干上方展示材料全文，
+   不再跳转回材料题。材料题自身（题干已含材料）不重复显示。 */
+function caseMaterialInline(subject, chapterId, qid) {
+  const m = findCaseMaterial(subject, chapterId, qid);
+  if (!m || /材料缺失/.test(m.stem || '')) return '';
+  const num = ((m.stem || '').match(/案例\s*[（(]?\s*([一二三四五六七八九十\d]+)/) || [])[1] || '';
+  return `<div class="case-mat-inline"><div class="cm-title">📄 案例材料${num ? '（案例' + num + '）' : ''}</div><div class="cm-body">${esc(m.stem)}</div></div>`;
+}
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
   if (!quiz._answers) quiz._answers = {};
@@ -855,24 +863,13 @@ function renderQuiz() {
   const submitBtnHtml = answered
     ? '<span class="pill g" style="margin-right:6px">✅ 已提交</span>'
     : '<button class="btn g" id="submitBtn" disabled>提交答案</button>';
-  // 案例材料回看：若当前题属于某个案例组（前面 6 题内存在「案例（N）」材料题）→ 提供回到材料题
-  // 2026-09-03 收紧：仅认「题干以案例（N）开头」的材料题，不再全文模糊匹配
-  const caseLink = (() => {
-    const stem = q.stem || '';
-    const selfIsCase = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(stem.trim());
-    if (answered || selfIsCase) return '';
-    for (let k = quiz.idx - 1; k >= 0 && k >= quiz.idx - 6; k--) {
-      const pk = quiz.queue[k].q.stem || '';
-      const isCaseHead = /^案例\s*[（(]?[一二三四五六七八九十\d]/.test(pk.trim());
-      if (isCaseHead) {
-        return `<a class="btn ghost" style="padding:4px 10px;font-size:12px;margin-left:8px" onclick="quizGo(${k})" title="回看本案例组的题干材料">📄 案例材料</a>`;
-      }
-    }
-    return '';
-  })();
+  // 案例材料内嵌直显（2026-09-08）：当前题属于某案例组 → 题干上方直接展示材料全文，不再跳转。
+  // 材料题自身（题干已含材料）不重复显示。已提交回看时同样显示，方便复盘。
+  const item = quiz.queue[quiz.idx];
+  const caseMat = caseMaterialInline(item.subject, item.chapterId, q.id);
   app.innerHTML = `<div class="card">
     <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${subjectPill(subOf(quiz.queue[quiz.idx]))} ${quiz.idx + 1}/${quiz.queue.length}</span></div>
-    <div class="q"><div class="qtype">${typeBadge(q.type)}${corrBadge}${caseLink}</div><div class="stem">${esc(q.stem)}</div>${opts}
+    <div class="q">${caseMat}<div class="qtype">${typeBadge(q.type)}${corrBadge}</div><div class="stem">${esc(q.stem)}</div>${opts}
       ${submitBtnHtml}
       <div class="explain" id="explain"></div>
       <div id="aiBox" style="margin-top:10px"></div>
@@ -1101,7 +1098,7 @@ function redoWrong(qid) {
   const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
   const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">${subjectPill(subOf(w))} ❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
-    <div class="q"><div class="qtype">${typeBadge(q.type)}</div>${caseMaterialHtml(w.subject, w.chapterId, w.qid)}<div class="stem">${esc(q.stem)}</div>
+    <div class="q">${caseMaterialInline(w.subject, w.chapterId, w.qid)}<div class="qtype">${typeBadge(q.type)}</div><div class="stem">${esc(q.stem)}</div>
     ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
     <button class="btn" style="color:var(--red)" onclick="delWrongSingle('${qid}')">🗑 删除此题</button>
