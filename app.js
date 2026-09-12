@@ -255,7 +255,13 @@ function renderStem(text) {
     if (/^\s*\|/.test(ln)) {
       const cells = ln.split('|').slice(1).map(s => s.trim());
       if (cells.length && cells[cells.length - 1] === '') cells.pop();
+      /* 防御（2026-09-12）：末格异常长 = 表格行后粘连的正文（题干等），
+         移出表格单独成行，避免题干被吞进表格最后一格。
+         依据：全库合法单元格最长 11 字（年金现值系数（10%）），阈值取 12。 */
+      let tailCell = '';
+      if (cells.length > 1 && cells[cells.length - 1].length > 12) tailCell = cells.pop();
       tbl.push(cells);
+      if (tailCell) { flushTbl(); html += esc(tailCell) + '\n'; }
     } else {
       flushTbl();
       html += esc(ln) + '\n';
