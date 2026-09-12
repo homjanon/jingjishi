@@ -239,6 +239,31 @@ function toast(msg) {
   clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('show'), 2200);
 }
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+/* 题干/材料渲染（2026-09-12）：支持「|」表格行语法——连续以|开头的行渲染为 HTML 表格，
+   首行为表头；其余行按原文换行保留（配合 .stem 的 pre-wrap）。 */
+function renderStem(text) {
+  const lines = String(text || '').split('\n');
+  let html = '', tbl = [];
+  const flushTbl = () => {
+    if (!tbl.length) return;
+    html += '<table class="stem-table">' + tbl.map((row, ri) =>
+      '<tr>' + row.map(c => `<${ri === 0 ? 'th' : 'td'}>${esc(c)}</${ri === 0 ? 'th' : 'td'}>`).join('') + '</tr>'
+    ).join('') + '</table>';
+    tbl = [];
+  };
+  for (const ln of lines) {
+    if (/^\s*\|/.test(ln)) {
+      const cells = ln.split('|').slice(1).map(s => s.trim());
+      if (cells.length && cells[cells.length - 1] === '') cells.pop();
+      tbl.push(cells);
+    } else {
+      flushTbl();
+      html += esc(ln) + '\n';
+    }
+  }
+  flushTbl();
+  return html;
+}
 
 /* ---------------- 错题库 ---------------- */
 /* 找案例材料题：在所属章内向前 6 题扫「案例（N）」材料题；本题自己就是材料题则返回 null
@@ -265,7 +290,7 @@ function caseMaterialHtml(subject, chapterId, qid) {
   const m = findCaseMaterial(subject, chapterId, qid);
   if (!m || /材料缺失/.test(m.stem || '')) return '';
   const num = ((m.stem || '').match(/案例\s*[（(]?\s*([一二三四五六七八九十\d]+)/) || [])[1] || '';
-  return `<details class="case-mat"><summary>📄 案例材料${num ? '（案例' + num + '）' : ''}</summary><div class="stem">${esc(m.stem)}</div></details>`;
+  return `<details class="case-mat"><summary>📄 案例材料${num ? '（案例' + num + '）' : ''}</summary><div class="stem">${renderStem(m.stem)}</div></details>`;
 }
 function addWrong(item) {
   const ex = state.wrong.find(w => w.qid === item.qid);
@@ -848,7 +873,7 @@ function caseMaterialInline(subject, chapterId, qid) {
   const m = findCaseMaterial(subject, chapterId, qid);
   if (!m || /材料缺失/.test(m.stem || '')) return '';
   const num = ((m.stem || '').match(/案例\s*[（(]?\s*([一二三四五六七八九十\d]+)/) || [])[1] || '';
-  return `<div class="case-mat-inline"><div class="cm-title">📄 案例材料${num ? '（案例' + num + '）' : ''}</div><div class="cm-body">${esc(m.stem)}</div></div>`;
+  return `<div class="case-mat-inline"><div class="cm-title">📄 案例材料${num ? '（案例' + num + '）' : ''}</div><div class="cm-body">${renderStem(m.stem)}</div></div>`;
 }
 function renderQuiz() {
   if (quiz.idx >= quiz.queue.length) { renderQuizSummary(); return; }
@@ -869,7 +894,7 @@ function renderQuiz() {
   const caseMat = caseMaterialInline(item.subject, item.chapterId, q.id);
   app.innerHTML = `<div class="card">
     <div class="row"><span class="muted">${esc(quiz.title)}</span><span class="muted">${subjectPill(subOf(quiz.queue[quiz.idx]))} ${quiz.idx + 1}/${quiz.queue.length}</span></div>
-    <div class="q">${caseMat}<div class="qtype">${typeBadge(q.type)}${corrBadge}</div><div class="stem">${esc(q.stem)}</div>${opts}
+    <div class="q">${caseMat}<div class="qtype">${typeBadge(q.type)}${corrBadge}</div><div class="stem">${renderStem(q.stem)}</div>${opts}
       ${submitBtnHtml}
       <div class="explain" id="explain"></div>
       <div id="aiBox" style="margin-top:10px"></div>
@@ -1051,7 +1076,7 @@ function renderWrong() {
     <div class="q">
       <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${subPill}${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}</div>
       ${caseMaterialHtml(w.subject, w.chapterId, w.qid)}
-      <div class="stem">${esc(w.stem)}</div>
+      <div class="stem">${renderStem(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(dispAnswer)} ${corrBadge}</div>
       ${dispExpl ? `<div class="explain show" style="background:var(--amber-l)"><b>解析：</b>${esc(dispExpl)}</div>` : ''}
       <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
@@ -1098,7 +1123,7 @@ function redoWrong(qid) {
   const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
   const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">${subjectPill(subOf(w))} ❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
-    <div class="q">${caseMaterialInline(w.subject, w.chapterId, w.qid)}<div class="qtype">${typeBadge(q.type)}</div><div class="stem">${esc(q.stem)}</div>
+    <div class="q">${caseMaterialInline(w.subject, w.chapterId, w.qid)}<div class="qtype">${typeBadge(q.type)}</div><div class="stem">${renderStem(q.stem)}</div>
     ${optHtml(q.options, q.type)}
     <button class="btn g" id="redoSubmit" disabled>提交</button>
     <button class="btn" style="color:var(--red)" onclick="delWrongSingle('${qid}')">🗑 删除此题</button>
