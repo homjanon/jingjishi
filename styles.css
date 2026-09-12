@@ -97,3 +97,9 @@ select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8p
 .ai-loading{color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px;}
 .spin{width:14px;height:14px;border:2px solid var(--blue);border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* 题干/材料换行与表格渲染（2026-09-12） */
+.q .stem, .case-mat .stem, .case-mat-inline .cm-body{white-space:pre-wrap;}
+.stem-table{border-collapse:collapse;margin:8px 0;font-size:13px;max-width:100%;}
+.stem-table th,.stem-table td{border:1px solid var(--line,#e5e7eb);padding:4px 10px;text-align:center;}
+.stem-table th{background:var(--amber-l,#FFF4E0);font-weight:600;}
