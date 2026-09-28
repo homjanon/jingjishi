@@ -646,6 +646,90 @@ window.pushPatchesToRepo = pushPatchesToRepo;
 window.pushMyCorrections = function () { pushPatchesToRepo(Object.assign({}, state.corrections)); };
 
 /* ---------------- 路由 ---------------- */
+
+/* ---------------- 专项强化：曲线图鉴 + 计算专练（2026-09-28） ---------------- */
+/* 曲线 8 图（仅收录 2020-2025 真题实际考过的考点；练习题全部复用题库原 qid，做错照常进错题库） */
+const DRILL_CURVES = [
+{id: "demand_supply",title: "需求 / 供给曲线（产品市场）",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><line x1='50' y1='25' x2='150' y2='115' stroke='#1971c2' stroke-width='2.2'/><line x1='80' y1='25' x2='180' y2='115' stroke='#1971c2' stroke-width='1.8' stroke-dasharray='5 4'/><line x1='60' y1='120' x2='185' y2='35' stroke='#e8590c' stroke-width='2.2'/><circle cx='114' cy='83' r='3.5' fill='#212529'/><circle cx='132' cy='71' r='3.5' fill='#212529'/><text x='143' y='122' font-size='11' fill='#1971c2'>D</text><text x='184' y='119' font-size='11' fill='#1971c2'>D'</text><text x='190' y='33' font-size='11' fill='#e8590c'>S</text><text x='104' y='96' font-size='10' fill='#212529'>E</text><text x='137' y='64' font-size='10' fill='#212529'>E'</text></svg>`,qids: ["e43q21","e48q56","e41q6","e38_30","e45q92"],points: ["需求曲线向右下方倾斜：价格↑→需求量↓（沿线的\"点移动\"）","收入、偏好、替代品/互补品价格等非价格因素 → 整条曲线\"线移动\"","供求相交 = 均衡价格 E；需求右移（D→D'）→ 均衡价格与数量同升","考法：区分\"点移动 vs 线移动\"、判断均衡变化方向"]},
+{id: "elasticity_tax",title: "弹性与税负转嫁（谁弹性小谁承担）",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><line x1='70' y1='25' x2='115' y2='120' stroke='#1971c2' stroke-width='2.2'/><line x1='45' y1='110' x2='220' y2='70' stroke='#e8590c' stroke-width='2.2'/><line x1='45' y1='90' x2='220' y2='50' stroke='#e8590c' stroke-width='1.8' stroke-dasharray='5 4'/><circle cx='99' cy='87' r='3.5' fill='#212529'/><circle cx='91' cy='70' r='3.5' fill='#212529'/><text x='100' y='118' font-size='11' fill='#1971c2'>D（陡峭=弹性小）</text><text x='196' y='66' font-size='11' fill='#e8590c'>S</text><text x='196' y='46' font-size='11' fill='#e8590c'>S'+税</text><text x='86' y='62' font-size='10' fill='#212529'>E'</text><text x='104' y='100' font-size='10' fill='#212529'>E</text></svg>`,qids: ["e42q66","e47q39","e40q22","e42q74","e42q29","e49q17"],points: ["需求价格弹性 = 需求量变动% ÷ 价格变动%；＞1 富有弹性（奢侈品），＜1 缺乏弹性（必需品）","税负转嫁规律：谁的弹性小，谁承担的税负多","需求弹性小（生活必需品）→ 税负易\"前转\"给消费者；供给弹性小 → 生产者自己扛","考法：给商品判弹性大小 → 判断转嫁方向与承担比例"]},
+{id: "cost_curves",title: "短期成本曲线族",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><line x1='35' y1='55' x2='235' y2='55' stroke='#adb5bd' stroke-width='1.6' stroke-dasharray='4 4'/><path d='M45 40 C 80 100 130 102 235 72' stroke='#1971c2' fill='none' stroke-width='2'/><path d='M45 55 C 85 108 125 108 235 84' stroke='#7048e8' fill='none' stroke-width='1.8'/><path d='M45 112 C 90 128 115 92 140 88 C 170 82 205 58 235 40' stroke='#d9480f' fill='none' stroke-width='2'/><circle cx='128' cy='99' r='3' fill='#212529'/><circle cx='146' cy='88' r='3' fill='#212529'/><text x='210' y='52' font-size='11' fill='#d9480f'>MC</text><text x='215' y='68' font-size='11' fill='#1971c2'>AC</text><text x='215' y='82' font-size='11' fill='#7048e8'>AVC</text><text x='210' y='50' font-size='10' fill='#212529'></text><text x='212' y='49' font-size='11' fill='#868e96'>FC</text></svg>`,qids: ["e43q48","e44q19","e46q77","e49q18"],points: ["FC 固定成本：不随产量变，水平线；TVC 随产量上升","AC / AVC 呈 U 形：先因规模效应下降，后因边际报酬递减上升","MC 边际成本先降后升，分别从下方穿过 AVC、AC 的最低点","MC＜AC 时 AC 下降；MC＞AC 时 AC 上升（记住\"MC 交平均线最低点\"）"]},
+{id: "market_struct",title: "不同市场结构的需求曲线",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.2'/><line x1='45' y1='62' x2='100' y2='62' stroke='#1971c2' stroke-width='2.2'/><text x='46' y='52' font-size='9' fill='#1971c2'>P=AR=MR</text><text x='48' y='120' font-size='10' fill='#495057'>完全竞争</text><line x1='118' y1='35' x2='168' y2='105' stroke='#1971c2' stroke-width='2.2'/><line x1='120' y1='50' x2='158' y2='100' stroke='#d9480f' stroke-width='1.6'/><text x='146' y='55' font-size='10' fill='#1971c2'>D</text><text x='128' y='120' font-size='10' fill='#495057'>垄断</text><path d='M195 40 L218 62 L245 112' stroke='#1971c2' fill='none' stroke-width='2.2'/><circle cx='218' cy='62' r='3' fill='#212529'/><text x='222' y='58' font-size='10' fill='#495057'>弯折点</text><text x='212' y='120' font-size='10' fill='#495057'>寡头</text></svg>`,qids: ["e42q31","e47q54","e46q1","e42q11","e48q92"],points: ["完全竞争：个别企业面对水平需求曲线，P=AR=MR","完全垄断：需求曲线右下倾，MR 在 D 下方（MR＜AR）","寡头：弯折需求曲线（斯威齐模型），弯折点价格粘性","垄断竞争：右下倾且较平缓（产品替代性强）","考法：给市场形态 → 判断需求曲线形状与 AR/MR 关系"]},
+{id: "factor_market",title: "要素市场：劳动供给曲线 + MRP/VMP",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><path d='M60 115 C 112 106 152 92 158 70 C 162 55 148 42 126 47' stroke='#d9480f' fill='none' stroke-width='2.4'/><path d='M129 40 L124 50 L134 52 Z' fill='#d9480f'/><circle cx='158' cy='70' r='3.5' fill='#212529'/><text x='163' y='74' font-size='10' fill='#495057'>弯曲点</text><text x='34' y='20' font-size='10' fill='#495057'>工资W</text><text x='218' y='122' font-size='10' fill='#495057'>劳动量</text><text x='70' y='132' font-size='10' fill='#e8590c'>替代效应＞收入效应 → 收入效应＞替代效应</text></svg>`,qids: ["e47q50","e49q33","e42q51","e48q4","e47q82"],points: ["劳动供给曲线向后弯曲：工资低→替代效应主导（多干活）；工资高→收入效应主导（少干活）","要素需求曲线 = MRP（边际收益产品）曲线，向右下方倾斜","⚠️ 2026 新口径：完全竞争要素市场 MFC = VMP（边际产品价值）；旧教材 MFC=MRP 表述已废，按 VMP 作答","考法：向后弯曲的原因（收入/替代效应博弈）"]},
+{id: "adas",title: "总需求 - 总供给模型（AD-AS）",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><line x1='45' y1='35' x2='200' y2='115' stroke='#1971c2' stroke-width='2.2'/><path d='M45 112 L110 112 C 150 108 170 80 190 45 L190 18' stroke='#e8590c' fill='none' stroke-width='2.4'/><circle cx='128' cy='107' r='3.5' fill='#212529'/><circle cx='182' cy='55' r='3.5' fill='#212529'/><text x='185' y='112' font-size='11' fill='#1971c2'>AD</text><text x='196' y='40' font-size='11' fill='#e8590c'>AS</text><text x='60' y='105' font-size='9' fill='#868e96'>萧条(水平)</text><text x='146' y='96' font-size='9' fill='#868e96'>中间</text><text x='196' y='70' font-size='9' fill='#868e96'>充分就业</text></svg>`,qids: ["e39q44","e39q58","e38_28","e42q86","e47q42"],points: ["AD 右下倾：价格总水平↑ → 总需求↓","AS 三段：水平段（萧条）→ 右上段（中间）→ 垂直段（充分就业）","AD 右移：在水平段只增产不涨价；在垂直段只涨价不增产（通胀）","考法：AS 三段形态识别 + 政策效果判断"]},
+{id: "islm",title: "货币市场与 IS-LM 模型",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><line x1='50' y1='25' x2='190' y2='115' stroke='#1971c2' stroke-width='2.2'/><line x1='60' y1='110' x2='180' y2='25' stroke='#e8590c' stroke-width='2.2'/><circle cx='118' cy='69' r='3.5' fill='#212529'/><text x='176' y='120' font-size='11' fill='#1971c2'>IS</text><text x='184' y='26' font-size='11' fill='#e8590c'>LM</text><text x='124' y='66' font-size='10' fill='#212529'>E</text></svg>`,qids: ["e39q40","e42q96","e45q38","e46q90"],points: ["IS：产品市场均衡（I=S），右下倾——利率↓→投资↑→国民收入↑","LM：货币市场均衡（L=M），右上倾——收入↑→货币需求↑→利率↑","交点 E：产品与货币市场同时均衡","流动性陷阱：利率极低时货币需求无限大，LM 近水平，货币政策失效","考法：IS/LM 移动因素（财政政策动 IS，货币政策动 LM）"]},
+{id: "phillips_cycle",title: "菲利普斯曲线与经济周期",svg: `<svg viewBox='0 0 260 150' xmlns='http://www.w3.org/2000/svg'><path d='M30 12 V128 H250' stroke='#adb5bd' fill='none' stroke-width='1.5'/><path d='M28 12 V128 H126' stroke='#adb5bd' fill='none' stroke-width='1.2'/><path d='M42 32 C 68 45 88 80 106 114' stroke='#d9480f' fill='none' stroke-width='2.2'/><text x='100' y='42' font-size='10' fill='#d9480f'>PC</text><text x='32' y='24' font-size='9' fill='#495057'>通胀</text><text x='108' y='122' font-size='9' fill='#495057'>失业</text><path d='M150 12 V128 H252' stroke='#adb5bd' fill='none' stroke-width='1.2'/><line x1='158' y1='70' x2='248' y2='70' stroke='#868e96' stroke-width='1.4' stroke-dasharray='4 3'/><path d='M160 82 C 175 45 190 98 205 62 C 218 34 236 92 248 64' stroke='#1971c2' fill='none' stroke-width='2'/><text x='160' y='62' font-size='9' fill='#868e96'>潜在产出</text><text x='196' y='120' font-size='9' fill='#495057'>实际产出波动</text></svg>`,qids: ["e40q20","e41q32","e48q27","e49q102"],points: ["菲利普斯曲线：失业率与通胀率此消彼长（短期右下倾）","经济周期四阶段：繁荣 → 衰退 → 萧条 → 复苏","古典型周期：总量绝对下降；增长型周期：增速放缓但未负增长","关联考点：奥肯定律——产出缺口与失业率反向变动"]}
+];
+/* 工商管理计算专练 7 组（题目复用题库 qid；全部 42 题已逐题验算答案与表格） */
+const DRILL_CALCS = [
+{id: "prod_capacity",title: "生产能力与假定产品法",qids: ["b16q20","b21q31","b20q10","b22q86","b15q64"],formulas: ["设备组产能 M = F（单位有效工时）× S（设备数）× P（产量定额）","假定产品台时定额 t = Σ(wi × ti)（产量比重加权）","假定产品年产能 M = F × S ÷ t假定；某产品产能 = M × wi"]},
+{id: "decision",title: "不确定型决策（后悔值/折中）",qids: ["b16q39","b21q95","b20q74","b14q86"],formulas: ["后悔值 = 该状态列最大损益值 − 本方案损益值；再取各方案最大后悔值\"大中取小\"","折中值 = α × 方案最大损益值 + (1−α) × 方案最小损益值（α=最大值系数），取最大","注意：题目给\"最小值系数\"时要先换算 α = 1 − 最小值系数"]},
+{id: "bep_pricing",title: "量本利与定价法",qids: ["b2q5","b14q87","b19q62"],formulas: ["盈亏平衡产量 Q* = F ÷ (P − V)","成本加成价 = 单位成本 × (1 + 加成率)；单位成本 = 单位可变成本 + 固定成本 ÷ 销量","目标利润价 = (总成本 + 投资额 × 投资收益率) ÷ 预期销量"]},
+{id: "invest",title: "投资决策（现值 / 回收期 / NPV）",qids: ["b12q9","b19q134","b21q21","b22q96","b20q88"],formulas: ["复利现值 = F ÷ (1+i)ⁿ；年金现值 = A × [1−(1+i)⁻ⁿ] ÷ i","递延年金：先按年金现值折到递延期末，再按复利现值折到期初（两次折现）","NPV = 未来报酬总现值 − 初始投资；标准离差率 = 标准离差 ÷ 期望报酬率"]},
+{id: "eoq",title: "库存管理：经济订货批量",qids: ["b19q99","b2q1"],formulas: ["EOQ = √( 2 × 年需求量 D × 单次订货成本 K ÷ 单位年持有成本 Kc )"]},
+{id: "markov",title: "马尔可夫模型与人员预测",qids: ["b14q80","b21q55"],formulas: ["一年后某职务内部供给 = 本职务留任人数 + 下级职务调升人数","人员变动矩阵读法：行=现职务，列概率=留任/调升/离职；调升概率填该职务的\"补充来源\""]},
+{id: "capital_fin",title: "资本成本与杠杆（CAPM）",qids: ["b13q17","b19q139","b20q31","b16q48","b21q96"],formulas: ["借款/债券资本成本率 = 年利息 × (1−所得税率) ÷ [筹资额 × (1−筹资费率)]","无筹资费时简化为：利率 × (1−T)","财务杠杆系数 DFL = EBIT ÷ (EBIT − 利息)","CAPM：K = Rf + β × (Rm − Rf)"]}
+];
+let _bankIdx = null;
+function bankIdx() {
+  if (_bankIdx) return _bankIdx;
+  _bankIdx = {};
+  ['economy', 'business'].forEach(s => {
+    const sub = DATA.questions[s];
+    if (!sub) return;
+    sub.chapters.forEach(ch => ch.questions.forEach(q => { _bankIdx[q.id] = { q, subject: s, chapterId: ch.id, chapterTitle: ch.title }; }));
+  });
+  return _bankIdx;
+}
+/* 按专项组卷：不写 progress（不动每日完成状态），判分/错题入库与常规刷题完全一致 */
+window.startDrillQuiz = function (kind, idx) {
+  const item = (kind === 'curves' ? DRILL_CURVES : DRILL_CALCS)[idx];
+  if (!item) { toast('专项不存在'); return; }
+  const idxMap = bankIdx();
+  const queue = item.qids.filter(qid => idxMap[qid]).map(qid => {
+    const hit = idxMap[qid];
+    return { q: applyCorrections(hit.q), subject: hit.subject, chapterId: hit.chapterId, chapterTitle: hit.chapterTitle };
+  });
+  if (!queue.length) { toast('该专项暂无可用题目'); return; }
+  sessionFromQueue(queue, item.title + '（专项）', false, [], false);
+  renderQuiz();
+};
+window.startDrillAll = function (kind) {
+  const list = kind === 'curves' ? DRILL_CURVES : DRILL_CALCS;
+  const idxMap = bankIdx();
+  const seen = new Set(), queue = [];
+  list.forEach(it => it.qids.forEach(qid => {
+    if (seen.has(qid) || !idxMap[qid]) return;
+    seen.add(qid);
+    const hit = idxMap[qid];
+    queue.push({ q: applyCorrections(hit.q), subject: hit.subject, chapterId: hit.chapterId, chapterTitle: hit.chapterTitle });
+  }));
+  if (!queue.length) { toast('清单为空'); return; }
+  sessionFromQueue(queue, (kind === 'curves' ? '曲线专项全刷' : '计算专项全刷') + `（${queue.length}题）`, false, [], false);
+  renderQuiz();
+};
+function renderDrill() {
+  const app = document.getElementById('app');
+  const curveCards = DRILL_CURVES.map((c, i) => `<div class="card drill-card">
+    <div class="row"><b>${c.title}</b><span class="pill b">${c.qids.length} 题</span></div>
+    <div class="drill-svg">${c.svg}</div>
+    <ul class="drill-points">${c.points.map(p => `<li>${p}</li>`).join('')}</ul>
+    <button class="btn" onclick="startDrillQuiz('curves', ${i})">练一练（${c.qids.length}）</button>
+  </div>`).join('');
+  const calcCards = DRILL_CALCS.map((c, i) => `<div class="card drill-card">
+    <div class="row"><b>${c.title}</b><span class="pill a">${c.qids.length} 题</span></div>
+    <div class="drill-formula">${c.formulas.map(f => `📐 ${f}`).join('<br>')}</div>
+    <button class="btn" onclick="startDrillQuiz('calcs', ${i})">练一练（${c.qids.length}）</button>
+  </div>`).join('');
+  const nC = DRILL_CURVES.reduce((a, c) => a + c.qids.length, 0);
+  const nK = DRILL_CALCS.reduce((a, c) => a + c.qids.length, 0);
+  app.innerHTML = `<div class="card"><div class="row"><b>🎯 专项强化</b><a class="btn ghost" href="#/today" style="padding:4px 12px">返回今日</a></div>
+    <p class="muted" style="font-size:13px">曲线图鉴：先学图、再做题（仅 2020-2025 真题考过的曲线）；计算专练：历年真题计算题按公式分组，已逐题验算。做错的题照常进错题库。</p></div>
+    <div class="row" style="margin:4px 2px"><b>📈 曲线图鉴</b><span class="muted" style="font-size:12px">共 ${nC} 题</span><button class="btn ghost" style="padding:4px 12px;margin-left:auto" onclick="startDrillAll('curves')">连刷全部</button></div>
+    <div class="drill-grid">${curveCards}</div>
+    <div class="row" style="margin:14px 2px 4px"><b>🧮 工商计算专练</b><span class="muted" style="font-size:12px">共 ${nK} 题</span><button class="btn ghost" style="padding:4px 12px;margin-left:auto" onclick="startDrillAll('calcs')">连刷全部</button></div>
+    <div class="drill-grid">${calcCards}</div>`;
+}
+
 function router() {
   const raw = (location.hash || '#/today').replace('#/', '');
   const _parts = raw.split('?');
@@ -659,6 +743,7 @@ function router() {
   else if (route === 'plan') renderPlan();
   else if (route === 'progress') renderProgress();
   else if (route === 'settings') renderSettings();
+  else if (route === 'drill') renderDrill();
   else renderToday();
 }
 window.addEventListener('hashchange', router);
@@ -673,6 +758,7 @@ window.nav = nav;
 
 /* ---------------- 视图：今日任务 ---------------- */
 function renderToday() {
+  const drillEntry = '<div class="card review" style="display:flex;align-items:center;gap:10px"><a class="btn" href="#/drill">🎯 专项强化</a><span class="muted" style="font-size:12px">曲线图鉴（先学后练）· 工商计算专练</span></div>';
   validateSession(false);   // 进今日页先净化孤儿会话，避免「未完成答题」横幅误报
   const t = todaysChapters();
   let banner;
@@ -703,9 +789,9 @@ function renderToday() {
   /* 2026变动考点专练已完成（b23 9/15、e50 9/14），入口撤下（2026-09-20）；
      章节 b23/e50 保留在题库中，其错题照常走错题库复习 */
   if (t.notStarted || t.finished) {
-    app.innerHTML = banner + resume + reviewCard;
+    app.innerHTML = banner + resume + drillEntry + reviewCard;
   } else {
-    app.innerHTML = banner + resume + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + reviewCard;
+    app.innerHTML = banner + resume + chapterCard('economy', t.economy, '经济基础') + chapterCard('business', t.business, '工商管理') + drillEntry + reviewCard;
   }
 }
 /* 今日某科是否已完成：dayDone 优先，兜底为 progress.done 中任一带今天日期的 {科}:* 完成
