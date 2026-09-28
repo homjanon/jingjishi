@@ -103,3 +103,11 @@ select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8p
 .stem-table{border-collapse:collapse;margin:8px 0;font-size:13px;max-width:100%;}
 .stem-table th,.stem-table td{border:1px solid var(--line,#e5e7eb);padding:4px 10px;text-align:center;}
 .stem-table th{background:var(--amber-l,#FFF4E0);font-weight:600;}
+
+/* 专项强化页（2026-09-28） */
+.drill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;margin-top:10px;}
+.drill-card .drill-svg{margin:8px 0 2px;}
+.drill-card svg{width:100%;max-width:420px;height:auto;display:block;}
+.drill-points{margin:6px 0 12px;padding-left:18px;font-size:13.5px;line-height:1.65;}
+.drill-points li{margin:3px 0;}
+.drill-formula{background:var(--amber-l,#FFF4E0);border-radius:8px;padding:8px 12px;font-size:13.5px;line-height:1.9;margin:8px 0;}
