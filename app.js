@@ -161,6 +161,18 @@ function migrateWrong() {
 function clearCorrections() { state.corrections = {}; saveCorrections(); toast('已清除全部 AI 修正'); router(); }
 
 /* ---------------- 答题会话（进度续接 + 上一题/下一题回看） ---------------- */
+/* 统一的“开新答题会话”入口（2026-10-06）
+   ⚠️ 必须同时设置全局 quiz 与 state.session：sessionFromQueue 只写 state.session，
+   若忘记赋值全局 quiz，renderQuiz() 会渲染上一轮遗留的题目
+   （历史 bug：专项强化点“练一练”却显示成错题库的题）。所有组卷入口一律走本函数。 */
+function beginQuiz(queue, title, fromWrong, doneKeys, marksDone) {
+  quiz = {
+    queue, idx: 0, correct: 0, wrong: 0, title, fromWrong: !!fromWrong,
+    _doneKeys: doneKeys || [], _marksDoneWhenComplete: !!marksDone, _answers: {}
+  };
+  sessionFromQueue(queue, title, !!fromWrong, quiz._doneKeys, quiz._marksDoneWhenComplete);
+  renderQuiz();
+}
 function sessionFromQueue(queue, title, fromWrong, doneKeys, marksDone) {
   state.session = {
     active: true,
@@ -690,8 +702,7 @@ window.startDrillQuiz = function (kind, idx) {
     return { q: applyCorrections(hit.q), subject: hit.subject, chapterId: hit.chapterId, chapterTitle: hit.chapterTitle };
   });
   if (!queue.length) { toast('该专项暂无可用题目'); return; }
-  sessionFromQueue(queue, item.title + '（专项）', false, [], false);
-  renderQuiz();
+  beginQuiz(queue, item.title + '（专项）', false, [], false);
 };
 window.startDrillAll = function (kind) {
   const list = kind === 'curves' ? DRILL_CURVES : DRILL_CALCS;
@@ -704,8 +715,7 @@ window.startDrillAll = function (kind) {
     queue.push({ q: applyCorrections(hit.q), subject: hit.subject, chapterId: hit.chapterId, chapterTitle: hit.chapterTitle });
   }));
   if (!queue.length) { toast('清单为空'); return; }
-  sessionFromQueue(queue, (kind === 'curves' ? '曲线专项全刷' : '计算专项全刷') + `（${queue.length}题）`, false, [], false);
-  renderQuiz();
+  beginQuiz(queue, (kind === 'curves' ? '曲线专项全刷' : '计算专项全刷') + `（${queue.length}题）`, false, [], false);
 };
 function renderDrill() {
   const app = document.getElementById('app');
@@ -857,14 +867,9 @@ function startQuiz(subject, chapterId, from, to) {
   if (!qs.length) { toast('该段暂无题目'); return; }
   const queue = qs.map(q => ({ q: applyCorrections(q), subject, chapterId, chapterTitle: ch.title }));
   const isSlice = (from != null) || (to != null);
-  quiz = {
-    queue, idx: 0, correct: 0, wrong: 0,
-    title: ch.title + `（第${f + 1}-${f + qs.length}题）`, fromWrong: false,
-    _doneKeys: [subject + ':' + chapterId + (isSlice ? ('#' + f + '-' + t) : '')],
-    _marksDoneWhenComplete: isSlice ? true : (t >= total)
-  };
-  sessionFromQueue(queue, quiz.title, false, quiz._doneKeys, quiz._marksDoneWhenComplete);
-  renderQuiz();
+  const title = ch.title + `（第${f + 1}-${f + qs.length}题）`;
+  const doneKeys = [subject + ':' + chapterId + (isSlice ? ('#' + f + '-' + t) : '')];
+  beginQuiz(queue, title, false, doneKeys, isSlice ? true : (t >= total));
 }
 function startAll() {
   const t = todaysChapters();
@@ -876,9 +881,7 @@ function startAll() {
   const doneKeys = [];
   if (t.economy) doneKeys.push('economy:' + t.economy.id + '#' + t.economy._from + '-' + t.economy._to);
   if (t.business) doneKeys.push('business:' + t.business.id + '#' + t.business._from + '-' + t.business._to);
-  quiz = { queue, idx: 0, correct: 0, wrong: 0, title: '今日全部', fromWrong: false, _doneKeys: doneKeys, _marksDoneWhenComplete: true };
-  sessionFromQueue(queue, '今日全部', false, doneKeys, true);
-  renderQuiz();
+  beginQuiz(queue, '今日全部', false, doneKeys, true);
 }
 /* ---------------- 题型工具 ----------------
    历史数据里多选写法有 multiple / multi 两种（2026-08-01 已归一化为 multiple），
@@ -1263,9 +1266,7 @@ function startWrongSession(list, title) {
     return { q: applyCorrections(q || {}), subject: it.subject, chapterId: it.chapterId, chapterTitle: (findChapter(it.subject, it.chapterId) || {}).title || '' };
   });
   shuffleArr(queue);
-  quiz = { queue, idx: 0, correct: 0, wrong: 0, title, fromWrong: true };
-  sessionFromQueue(queue, title, true, [], false);
-  renderQuiz();
+  beginQuiz(queue, title, true, [], false);
 }
 function startWrongDue() { startWrongSession(state.wrong.filter(isDue), '错题 · 待复习'); }
 function startWrongAll() { startWrongSession(state.wrong, '错题 · 全部重做'); }
