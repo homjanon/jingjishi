@@ -673,13 +673,20 @@ const DRILL_CURVES = [
 ];
 /* 工商管理计算专练 7 组（题目复用题库 qid；全部 42 题已逐题验算答案与表格） */
 const DRILL_CALCS = [
-{id: "prod_capacity",title: "生产能力与假定产品法",qids: ["b16q20","b21q31","b20q10","b22q86","b15q64"],formulas: ["设备组产能 M = F（单位有效工时）× S（设备数）× P（产量定额）","假定产品台时定额 t = Σ(wi × ti)（产量比重加权）","假定产品年产能 M = F × S ÷ t假定；某产品产能 = M × wi"]},
-{id: "decision",title: "不确定型决策（后悔值/折中）",qids: ["b16q39","b21q95","b20q74","b14q86"],formulas: ["后悔值 = 该状态列最大损益值 − 本方案损益值；再取各方案最大后悔值\"大中取小\"","折中值 = α × 方案最大损益值 + (1−α) × 方案最小损益值（α=最大值系数），取最大","注意：题目给\"最小值系数\"时要先换算 α = 1 − 最小值系数"]},
-{id: "bep_pricing",title: "量本利与定价法",qids: ["b2q5","b14q87","b19q62"],formulas: ["盈亏平衡产量 Q* = F ÷ (P − V)","成本加成价 = 单位成本 × (1 + 加成率)；单位成本 = 单位可变成本 + 固定成本 ÷ 销量","目标利润价 = (总成本 + 投资额 × 投资收益率) ÷ 预期销量"]},
-{id: "invest",title: "投资决策（现值 / 回收期 / NPV）",qids: ["b12q9","b19q134","b21q21","b22q96","b20q88"],formulas: ["复利现值 = F ÷ (1+i)ⁿ；年金现值 = A × [1−(1+i)⁻ⁿ] ÷ i","递延年金：先按年金现值折到递延期末，再按复利现值折到期初（两次折现）","NPV = 未来报酬总现值 − 初始投资；标准离差率 = 标准离差 ÷ 期望报酬率"]},
-{id: "eoq",title: "库存管理：经济订货批量",qids: ["b19q99","b2q1"],formulas: ["EOQ = √( 2 × 年需求量 D × 单次订货成本 K ÷ 单位年持有成本 Kc )"]},
-{id: "markov",title: "马尔可夫模型与人员预测",qids: ["b14q80","b21q55"],formulas: ["一年后某职务内部供给 = 本职务留任人数 + 下级职务调升人数","人员变动矩阵读法：行=现职务，列概率=留任/调升/离职；调升概率填该职务的\"补充来源\""]},
-{id: "capital_fin",title: "资本成本与杠杆（CAPM）",qids: ["b13q17","b19q139","b20q31","b16q48","b21q96"],formulas: ["借款/债券资本成本率 = 年利息 × (1−所得税率) ÷ [筹资额 × (1−筹资费率)]","无筹资费时简化为：利率 × (1−T)","财务杠杆系数 DFL = EBIT ÷ (EBIT − 利息)","CAPM：K = Rf + β × (Rm − Rf)"]}
+{id: "prod_capacity",title: "生产能力核算（设备组/流水线/假定产品/代表产品）",qids: ["b16q20","b19q85","b20q10","b24q3"],formulas: ["设备组：M＝F（单位有效工时）×S（设备数）×P（产量定额）","流水线：M＝F÷r（r 为节拍）","假定产品法：t＝Σ(wi×ti)，M＝F×S÷t，某产品产能＝M×wi","代表产品法：Ki＝ti÷td，Md＝F×S÷td，Mi 按产量比重与 Ki 折算"]},
+{id: "prod_plan",title: "生产作业计划编制（在制品定额法/累计编号法）",qids: ["b13q76","b20q81","b16q53"],formulas: ["在制品定额法：本车间出产量＝后续车间投入量＋半成品外售量＋(期末库存定额－期初预计结存)","在制品定额法：本车间投入量＝本车间出产量＋计划废品量＋(期末在制品定额－期初预计在制品结存)","累计编号法（提前期法）：出产累计号＝最后车间出产累计号＋本车间出产提前期×最后车间平均日产量","累计编号法（提前期法）：投入累计号＝最后车间出产累计号＋本车间投入提前期×最后车间平均日产量"]},
+{id: "risk_decision",title: "风险型决策（期望损益/决策树）",qids: ["b19q33","b24q1"],formulas: ["期望值＝Σ(各状态损益值×该状态概率)；比较各方案期望值取最大","决策树：从右向左逐级计算状态节点期望值，在决策节点“取大”"]},
+{id: "decision",title: "不确定型决策（后悔值/折中）",qids: ["b16q39","b21q95"],formulas: ["后悔值＝该状态列最大损益值－本方案损益值；再取各方案最大后悔值“大中取小”","折中值＝α×方案最大损益值＋(1－α)×方案最小损益值；给“最小值系数”要先换算 α＝1－最小值系数"]},
+{id: "bep_pricing",title: "确定型决策与定价（量本利/线性规划/成本加成/目标利润）",qids: ["b2q5","b24q2","b14q87","b19q62"],formulas: ["盈亏平衡产量 Q*＝F÷(P－V)","线性规划：列约束→求可行域顶点→代入目标函数取最优","成本加成价＝单位成本×(1＋加成率)，单位成本＝单位可变成本＋固定成本÷销量","目标利润价＝(总成本＋投资额×投资收益率)÷预期销量"]},
+{id: "invest",title: "投资决策（现金流量/NPV/回收期/获利指数/IRR）",qids: ["b20q88","b21q21","b22q98","b24q5","b24q6"],formulas: ["初始现金流量＝固定资产投资＋流动资产投资＋其他投资费用－原有固定资产变价收入","NPV＝未来报酬总现值－初始投资；净现值≥0 可行","静态投资回收期＝原始投资额÷每年 NCF","获利指数 PI＝未来报酬总现值÷初始投资额；PI≥1 可行","IRR 插值：IRR≈i₁＋[NPV₁÷(|NPV₁|＋|NPV₂|)]×(i₂－i₁)"]},
+{id: "capital_fin",title: "资本成本与杠杆（借款/债券/综合资本成本/杠杆/无差别点）",qids: ["b19q139","b20q31","b21q97","b21q98","b24q7"],formulas: ["借款资本成本率＝年利率×(1－T)÷(1－筹资费用率)","债券资本成本率＝年利息×(1－T)÷[筹资额×(1－筹资费用率)]","综合资本成本＝Σ(各方式资本成本×该方式筹资比重)","总杠杆系数＝营业杠杆系数×财务杠杆系数","每股利润无差别点：(EBIT－I₁)(1－T)/N₁＝(EBIT－I₂)(1－T)/N₂"]},
+{id: "inventory",title: "库存控制（EOQ/订购点/订购间隔期）",qids: ["b19q99","b12q4","b24q4"],formulas: ["经济订购批量 EOQ＝√(2×年需求量D×每次订购成本K÷单位年持有成本Kc)","订购点＝平均日需求量×备运时间＋安全库存量","定期控制：最佳年订购次数 m₀＝√(D×K÷2C)；订购间隔期 T₀＝1÷m₀"]},
+{id: "hr_forecast",title: "人力资源需求预测（转换比率/一元回归/马尔可夫）",qids: ["b19q121","b21q81","b14q80"],formulas: ["转换比率法：先算需增加总人数，再按各类人员比例分配","一元回归：y＝a＋b·x（x 为销售额等驱动量）","马尔可夫模型：一年后某职务内部供给＝本职务现有人数×留任概率＋下级职务人数×调升概率"]},
+{id: "salary",title: "薪酬区间与浮动率",qids: ["b21q6","b20q84"],formulas: ["薪酬区间最高值＝区间中值×(1＋薪酬浮动率)；最低值＝中值×(1－浮动率)","各薪酬级别差距＝(最高值－最低值)÷(级别数－1)"]},
+{id: "tech_value",title: "技术价值评估（成本模型）",qids: ["b14q77"],formulas: ["成本模型：以重置成本为基础，按成新率折算技术评估值"]},
+{id: "quality",title: "工序能力指数（Cp / Cpk）",qids: ["b23q12","b24q9"],formulas: ["工序能力 B＝6σ；中心重合时 Cp＝T÷(6σ)","中心偏移时 Cpk＝(T－2ε)÷(6σ)（ε 为分布中心对公差中心的偏移量）","等级：≥1.67 特级；1.33~1.67 一级；1.00~1.33 二级；0.67~1.00 三级；＜0.67 四级"]},
+{id: "channel_fin",title: "渠道财务绩效（费用利润率）",qids: ["b21q53"],formulas: ["渠道费用利润率＝渠道利润额÷分销渠道费用×100%"]},
+{id: "value_eval",title: "企业价值评估（市盈率法）",qids: ["b24q8"],formulas: ["市盈率法：目标企业价值＝企业净利润总额×标准市盈率"]}
 ];
 let _bankIdx = null;
 function bankIdx() {
@@ -717,21 +724,26 @@ window.startDrillAll = function (kind) {
   if (!queue.length) { toast('清单为空'); return; }
   beginQuiz(queue, (kind === 'curves' ? '曲线专项全刷' : '计算专项全刷') + `（${queue.length}题）`, false, [], false);
 };
+/* 实际可用题数：题库尚未同步（如 CDN 缓存旧 questions.json）时如实显示，不虚标 */
+function avail(group) {
+  const ix = bankIdx();
+  return group.qids.filter(qid => ix[qid]).length;
+}
 function renderDrill() {
   const app = document.getElementById('app');
   const curveCards = DRILL_CURVES.map((c, i) => `<div class="card drill-card">
-    <div class="row"><b>${c.title}</b><span class="pill b">${c.qids.length} 题</span></div>
+    <div class="row"><b>${c.title}</b><span class="pill b">${avail(c)} 题</span></div>
     <div class="drill-svg">${c.svg}</div>
     <ul class="drill-points">${c.points.map(p => `<li>${p}</li>`).join('')}</ul>
-    <button class="btn" onclick="startDrillQuiz('curves', ${i})">练一练（${c.qids.length}）</button>
+    <button class="btn" onclick="startDrillQuiz('curves', ${i})">练一练（${avail(c)}）</button>
   </div>`).join('');
   const calcCards = DRILL_CALCS.map((c, i) => `<div class="card drill-card">
-    <div class="row"><b>${c.title}</b><span class="pill a">${c.qids.length} 题</span></div>
+    <div class="row"><b>${c.title}</b><span class="pill a">${avail(c)} 题</span></div>
     <div class="drill-formula">${c.formulas.map(f => `📐 ${f}`).join('<br>')}</div>
-    <button class="btn" onclick="startDrillQuiz('calcs', ${i})">练一练（${c.qids.length}）</button>
+    <button class="btn" onclick="startDrillQuiz('calcs', ${i})">练一练（${avail(c)}）</button>
   </div>`).join('');
-  const nC = DRILL_CURVES.reduce((a, c) => a + c.qids.length, 0);
-  const nK = DRILL_CALCS.reduce((a, c) => a + c.qids.length, 0);
+  const nC = DRILL_CURVES.reduce((a, c) => a + avail(c), 0);
+  const nK = DRILL_CALCS.reduce((a, c) => a + avail(c), 0);
   app.innerHTML = `<div class="card"><div class="row"><b>🎯 专项强化</b><a class="btn ghost" href="#/today" style="padding:4px 12px">返回今日</a></div>
     <p class="muted" style="font-size:13px">曲线图鉴：先学图、再做题（仅 2020-2025 真题考过的曲线）；计算专练：历年真题计算题按公式分组，已逐题验算。做错的题照常进错题库。</p></div>
     <div class="row" style="margin:4px 2px"><b>📈 曲线图鉴</b><span class="muted" style="font-size:12px">共 ${nC} 题</span><button class="btn ghost" style="padding:4px 12px;margin-left:auto" onclick="startDrillAll('curves')">连刷全部</button></div>
@@ -1115,6 +1127,8 @@ function renderWrong() {
   if (!state.wrong.length) { app.innerHTML = `<div class="card empty">🎉 暂无错题，继续保持！</div>`; return; }
   const dueList = state.wrong.filter(isDue);
   const unCount = state.wrong.filter(isUnanswerable).length;
+  const cntStub = state.wrong.filter(w => (w.count || 1) >= 3).length;
+  const cntHard = state.wrong.filter(w => (w.count || 1) >= 3 && (w.box || 0) === 0).length;
   const sortMode = state.settings.wrongSort || 'rand';
   const subFilter = state.settings.wrongSub || 'all';   // all / economy / business（临时筛选）
   const cntE = state.wrong.filter(w => subOf(w) === 'economy').length;
@@ -1139,6 +1153,8 @@ function renderWrong() {
       <button class="btn ghost" onclick="toggleAllSel()">☐ 全选</button>
       <button class="btn" onclick="rmWrongBatch()">🗑 删除所选（<span id="selCount">0</span>）</button>
       ${unCount ? `<button class="btn" style="color:var(--red)" onclick="rmUnanswerable()">⚠️ 一键删除无法作答（${unCount}）</button>` : ''}
+      <button class="btn ghost" onclick="startStubborn(3)" title="累计做错≥3次的题，按错误次数从高到低">🔁 顽固错题（${cntStub}）</button>
+      <button class="btn ghost" onclick="startStubborn(3, true)" title="错≥3次且至今一次没做对过">💀 从未做对（${cntHard}）</button>
       <button class="btn ghost" onclick="rmWrongByList()">🧹 按清单清理</button>
     </div></div>`;
   let list = state.wrong.slice();
@@ -1258,16 +1274,27 @@ function redoWrong(qid) {
 }
 window.redoWrong = redoWrong;
 
-function startWrongSession(list, title) {
+function startWrongSession(list, title, keepOrder) {
   const items = list.filter(w => Array.isArray(w.options) && w.options.length >= 2).map(w => ({ subject: w.subject, chapterId: w.chapterId, qid: w.qid }));
   if (!items.length) { toast('没有可重做的题目（需含选项）'); renderWrong(); return; }
   const queue = items.map(it => {
     const q = findQById(it.qid);
     return { q: applyCorrections(q || {}), subject: it.subject, chapterId: it.chapterId, chapterTitle: (findChapter(it.subject, it.chapterId) || {}).title || '' };
   });
-  shuffleArr(queue);
+  if (!keepOrder) shuffleArr(queue);
   beginQuiz(queue, title, true, [], false);
 }
+/* 顽固错题循环练（2026-10-17）：按累计做错次数筛选，次数高的排前面
+   onlyNever=true 时只看“至今一次没做对过”(box=0) 的硬骨头 */
+window.startStubborn = function (minCount, onlyNever) {
+  const mc = minCount || 3;
+  let list = state.wrong.filter(w => (w.count || 1) >= mc);
+  if (onlyNever) list = list.filter(w => (w.box || 0) === 0);
+  if (!list.length) { toast('没有符合条件的顽固错题'); return; }
+  list = list.slice().sort((a, b) => (b.count || 1) - (a.count || 1));
+  const title = (onlyNever ? '顽固错题 · 从未做对' : '顽固错题 · 错≥' + mc + '次') + '（' + list.length + '）';
+  startWrongSession(list, title, true);
+};
 function startWrongDue() { startWrongSession(state.wrong.filter(isDue), '错题 · 待复习'); }
 function startWrongAll() { startWrongSession(state.wrong, '错题 · 全部重做'); }
 window.startWrongDue = startWrongDue;
