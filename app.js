@@ -752,6 +752,335 @@ function renderDrill() {
     <div class="drill-grid">${calcCards}</div>`;
 }
 
+/* ================= 真题模考模块（2026-10-21） ================= */
+/* 卷面配置：严格按真题结构（题号区间 → 题型/分值），案例题按不定项 2 分处理，
+   不依赖题目自身的 type 字段（案例题在题库里 single/multiple 混杂）。 */
+const MOCK_PAPERS = [
+  {
+    id: 'e49', subject: 'economy', chapterId: 'e49',
+    title: '2025 经济基础真题 · 11.2 下午场',
+    minutes: 90, totalScore: 140,
+    sections: [
+      { label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 },
+      { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }
+    ]
+  },
+  {
+    id: 'b22', subject: 'business', chapterId: 'b22',
+    title: '2025 工商管理真题 · 11.2 下午场',
+    minutes: 90, totalScore: 140,
+    sections: [
+      { label: '一、单选题', from: 0, to: 60, type: 'single', score: 1 },
+      { label: '二、多选题', from: 60, to: 80, type: 'multiple', score: 2 },
+      { label: '三、案例分析题（不定项）', from: 80, to: 100, type: 'case', score: 2 }
+    ]
+  }
+];
+const MOCK_SESS_KEY = 'mock_session_v1';
+const MOCK_HIS_KEY = 'mock_history_v1';
+let mock = null, mockTick = null;
+
+function mockPaper(id) { return MOCK_PAPERS.find(p => p.id === id) || null; }
+function mockSec(paper, i) {
+  return paper.sections.find(s => i >= s.from && i < s.to) || paper.sections[paper.sections.length - 1];
+}
+function mockItems(paper) {
+  const ch = findChapter(paper.subject, paper.chapterId);
+  if (!ch || !ch.questions) return [];
+  return ch.questions.map(q => ({ q: applyCorrections(q), subject: paper.subject, chapterId: paper.chapterId, chapterTitle: ch.title }));
+}
+function mockHistory() { try { return JSON.parse(localStorage.getItem(MOCK_HIS_KEY) || '[]'); } catch (e) { return []; } }
+function mockSaveHistory(h) { localStorage.setItem(MOCK_HIS_KEY, JSON.stringify(h.slice(-50))); }
+function loadMockSession() { try { return JSON.parse(localStorage.getItem(MOCK_SESS_KEY) || 'null'); } catch (e) { return null; } }
+function saveMockSession() { if (mock) localStorage.setItem(MOCK_SESS_KEY, JSON.stringify(mock)); }
+function clearMockSession() { mock = null; localStorage.removeItem(MOCK_SESS_KEY); stopMockTick(); }
+function stopMockTick() { if (mockTick) { clearInterval(mockTick); mockTick = null; } }
+function mockRemain() {
+  if (!mock) return 0;
+  const p = mockPaper(mock.paperId);
+  if (!p) return 0;
+  return Math.max(0, p.minutes * 60 - Math.floor((Date.now() - mock.startedAt) / 1000));
+}
+function mockFmt(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+/* ---------- 列表页 ---------- */
+window.startMock = function (paperId) {
+  const saved = loadMockSession();
+  if (saved && saved.paperId === paperId && !saved.submitted) {
+    mock = saved;
+  } else {
+    mock = { paperId, idx: 0, answers: {}, startedAt: Date.now(), submitted: false };
+  }
+  saveMockSession();
+  location.hash = '#/mock';
+  renderMock();
+};
+window.mockResume = function () {
+  const saved = loadMockSession();
+  if (!saved || saved.submitted) { toast('没有进行中的模考'); return; }
+  mock = saved;
+  location.hash = '#/mock';
+  renderMock();
+};
+window.mockDiscard = function () {
+  if (!confirm('放弃本次模考？已作答内容将被清空。')) return;
+  clearMockSession();
+  renderMock();
+};
+window.mockBackList = function () {
+  const saved = loadMockSession();
+  if (saved && !saved.submitted) {
+    if (!confirm('退出后计时继续，下次可继续作答。确定退出？')) return;
+    stopMockTick();
+    location.hash = '#/today';
+    return;
+  }
+  clearMockSession();
+  renderMock();
+};
+window.mockStartFresh = function (paperId) {
+  if (loadMockSession()) clearMockSession();
+  startMock(paperId);
+};
+
+function renderMock() {
+  const app = document.getElementById('app');
+  const saved = loadMockSession();
+  if (saved && !saved.submitted) { renderMockExam(); return; }
+  if (saved && saved.submitted) { renderMockResult(); return; }
+  stopMockTick();
+  const his = mockHistory();
+  const cards = MOCK_PAPERS.map(p => {
+    const runs = his.filter(h => h.paperId === p.id);
+    const best = runs.length ? Math.max.apply(null, runs.map(h => h.score)) : null;
+    const last = runs.length ? runs[runs.length - 1] : null;
+    const ch = findChapter(p.subject, p.chapterId);
+    const n = ch ? ch.questions.length : 0;
+    return `<div class="card mock-paper">
+      <div class="row"><b>${esc(p.title)}</b><span class="pill g">${n} 题 · ${p.minutes} 分钟 · ${p.totalScore} 分</span></div>
+      <p class="muted" style="font-size:13px;margin:6px 0 10px">${p.sections.map(s => s.label + ' ' + (s.to - s.from) + ' 题').join(' · ')}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn" onclick="mockStartFresh('${p.id}')">开始模考</button>
+        ${last ? `<span class="muted" style="font-size:12px">上次 ${last.score}/${p.totalScore} 分 · ${last.date}</span>` : '<span class="muted" style="font-size:12px">尚未模考</span>'}
+        ${best != null ? `<span class="pill a">最高 ${best}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  const hisRows = his.slice().reverse().slice(0, 8).map(h =>
+    `<tr><td>${h.date}</td><td>${esc(h.title)}</td><td class="c">${h.score}/${h.total}</td><td class="c">${mockFmt(h.usedSec)}</td><td class="c">${h.right}对 / ${h.wrong}错 / ${h.blank}未答</td></tr>`).join('');
+  app.innerHTML = `<div class="card"><div class="row"><b>🧪 真题模考</b><a class="btn ghost" href="#/today" style="padding:4px 12px">返回今日</a></div>
+    <p class="muted" style="font-size:13px">按真实考试规则计时与评分：单选 1 分；多选/案例 2 分，错选不得分、少选每项 0.5 分。交卷后错题自动进入错题库；模考不占用每日计划进度。</p></div>
+    ${cards}
+    ${his.length ? `<div class="card"><b>历史成绩</b><table class="mock-his"><thead><tr><th>日期</th><th>试卷</th><th>得分</th><th>用时</th><th>结果</th></tr></thead><tbody>${hisRows}</tbody></table></div>` : ''}`;
+}
+
+/* ---------- 答题页 ---------- */
+function renderMockExam(keepScroll) {
+  const app = document.getElementById('app');
+  const paper = mockPaper(mock.paperId);
+  const items = mockItems(paper);
+  if (!items.length) { app.innerHTML = '<div class="card empty">该试卷暂无题目</div>'; return; }
+  const i = Math.min(mock.idx, items.length - 1);
+  const it = items[i], q = it.q, sec = mockSec(paper, i);
+  const rec = mock.answers[q.id] || { sel: [], marked: false };
+  const multi = sec.type !== 'single';
+  const opts = q.options.map((o, k) => {
+    const on = rec.sel.indexOf(k) >= 0;
+    return `<button class="mock-opt${on ? ' on' : ''}" onclick="mockPick(${k})">${esc(o)}</button>`;
+  }).join('');
+  const remain = mockRemain();
+  const clockCls = remain <= 600 ? ' warn' : '';
+  const answered = items.filter(x => (mock.answers[x.q.id] || {}).sel && (mock.answers[x.q.id] || {}).sel.length).length;
+  const cardNums = items.map((x, k) => {
+    const r = mock.answers[x.q.id] || {};
+    const cls = (r.sel && r.sel.length ? ' done' : '') + (r.marked ? ' mark' : '') + (k === i ? ' cur' : '');
+    return `<div class="mock-num${cls}" onclick="mockGo(${k})">${k + 1}</div>`;
+  }).join('');
+  const mat = caseMaterialInline(it.subject, it.chapterId, q.id);
+  app.innerHTML = `<div class="card">
+    <div class="row mock-head"><b>${esc(paper.title)}</b>
+      <span class="mock-clock${clockCls}" id="mockClock">${mockFmt(remain)}</span>
+      <span class="muted" style="font-size:12px">已答 ${answered}/${items.length}</span>
+      <button class="btn ghost" style="padding:4px 10px;font-size:12px" onclick="mockToggleCard()">答题卡</button>
+      <button class="btn" style="padding:4px 12px" onclick="mockSubmit(false)">交卷</button>
+    </div>
+    <div class="mock-sec">${sec.label}　第 ${i + 1} 题 / 共 ${items.length} 题　（本大题每题 ${sec.score} 分${multi ? '，少选按项给分' : ''}）</div>
+    <div class="q">${mat}
+      <div class="qtype"><span class="pill${multi ? ' a' : ''}">${multi ? '多选/不定项' : '单选'}</span>
+        ${rec.marked ? '<span class="pill a">已标记</span>' : ''}</div>
+      <div class="stem">${renderStem(q.stem)}</div>
+      <div class="mock-opts">${opts}</div>
+    </div>
+    <div id="mockCardBox" style="display:none" class="mock-card">${cardNums}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn ghost" ${i === 0 ? 'disabled' : ''} onclick="mockGo(${i - 1})">‹ 上一题</button>
+      <button class="btn ghost" onclick="mockMark()">${rec.marked ? '取消标记' : '标记待定'}</button>
+      <button class="btn ghost" ${i === items.length - 1 ? 'disabled' : ''} onclick="mockGo(${i + 1})">下一题 ›</button>
+      <a class="btn ghost" style="margin-left:auto;padding:4px 10px;font-size:12px" href="javascript:void(0)" onclick="mockBackList()">退出</a>
+    </div>
+  </div>`;
+  if (keepScroll) window.scrollTo(0, keepScroll);
+  startMockTick();
+}
+function startMockTick() {
+  stopMockTick();
+  const tick = () => {
+    const el = document.getElementById('mockClock');
+    const r = mockRemain();
+    if (el) { el.textContent = mockFmt(r); el.className = 'mock-clock' + (r <= 600 ? ' warn' : ''); }
+    if (r <= 0) { stopMockTick(); if ((location.hash || '').indexOf('#/mock') === 0) { toast('考试时间到，自动交卷'); mockSubmit(true); } }
+  };
+  mockTick = setInterval(tick, 1000);
+  tick();
+}
+window.mockPick = function (k) {
+  const y = window.scrollY;
+  const paper = mockPaper(mock.paperId);
+  const items = mockItems(paper);
+  const q = items[mock.idx].q, sec = mockSec(paper, mock.idx);
+  const rec = mock.answers[q.id] || (mock.answers[q.id] = { sel: [], marked: false });
+  if (sec.type === 'single') rec.sel = rec.sel.length === 1 && rec.sel[0] === k ? [] : [k];
+  else {
+    const p = rec.sel.indexOf(k);
+    if (p >= 0) rec.sel.splice(p, 1); else rec.sel.push(k);
+  }
+  saveMockSession();
+  renderMockExam(y);
+};
+window.mockGo = function (i) {
+  const y = window.scrollY;
+  const paper = mockPaper(mock.paperId);
+  const n = mockItems(paper).length;
+  mock.idx = Math.max(0, Math.min(n - 1, i));
+  saveMockSession();
+  renderMockExam(0);
+};
+window.mockMark = function () {
+  const y = window.scrollY;
+  const items = mockItems(mockPaper(mock.paperId));
+  const q = items[mock.idx].q;
+  const rec = mock.answers[q.id] || (mock.answers[q.id] = { sel: [], marked: false });
+  rec.marked = !rec.marked;
+  saveMockSession();
+  renderMockExam(y);
+};
+window.mockToggleCard = function () {
+  const box = document.getElementById('mockCardBox');
+  if (box) box.style.display = box.style.display === 'none' ? 'grid' : 'none';
+};
+
+/* ---------- 评分 ---------- */
+function mockGrade(paper, items) {
+  let score = 0, right = 0, wrong = 0, blank = 0, part = 0;
+  const detail = [];
+  items.forEach((it, i) => {
+    const sec = mockSec(paper, i);
+    const ans = normAnswer(it.q.answer);
+    const sel = ((mock.answers[it.q.id] || {}).sel) || [];
+    if (!sel.length) { blank++; detail.push({ state: 'blank' }); return; }
+    const picked = sel.map(k => it.q.options[k][0]);
+    if (sec.type === 'single') {
+      if (picked.length === 1 && picked[0] === ans[0]) { score += sec.score; right++; detail.push({ state: 'right' }); }
+      else { wrong++; detail.push({ state: 'wrong' }); }
+    } else {
+      const bad = picked.some(p => ans.indexOf(p) < 0);
+      if (bad) { wrong++; detail.push({ state: 'wrong' }); }
+      else if (picked.length === ans.length) { score += sec.score; right++; detail.push({ state: 'right' }); }
+      else { const s = Math.round(0.5 * picked.length * 10) / 10; score += s; part++; detail.push({ state: 'part', score: s }); }
+    }
+  });
+  return { score: Math.round(score * 10) / 10, right, wrong, blank, part, detail };
+}
+
+window.mockSubmit = function (auto) {
+  if (!mock || mock.submitted) return;
+  const paper = mockPaper(mock.paperId);
+  const items = mockItems(paper);
+  if (!auto) {
+    const un = items.filter(x => !((mock.answers[x.q.id] || {}).sel || []).length).length;
+    if (un && !confirm('还有 ' + un + ' 题未作答，确定交卷？')) return;
+  }
+  stopMockTick();
+  const res = mockGrade(paper, items);
+  const used = Math.min(paper.minutes * 60, Math.floor((Date.now() - mock.startedAt) / 1000));
+  mock.submitted = true; mock.result = res; mock.usedSec = used;
+  saveMockSession();
+  const h = mockHistory();
+  h.push({ paperId: paper.id, title: paper.title, date: localToday(), score: res.score, total: paper.totalScore, usedSec: used, right: res.right, wrong: res.wrong, blank: res.blank });
+  mockSaveHistory(h);
+  // 错题入库（错选 / 少选 / 未答）
+  items.forEach((it, i) => {
+    const st = res.detail[i].state;
+    if (st === 'right' || st === 'blank') return;   // 未答不入错题库（可在成绩页回看、重考）
+    const sel = (((mock.answers[it.q.id] || {}).sel) || []).map(k => it.q.options[k][0]).join('');
+    addWrong({
+      qid: it.q.id, subject: it.subject, chapterId: it.chapterId, chapterTitle: it.chapterTitle,
+      stem: it.q.stem, options: it.q.options, type: it.q.type, explanation: it.q.explanation,
+      answer: normAnswer(it.q.answer).join(''), yourWrong: sel
+    });
+  });
+  renderMockResult();
+};
+
+/* ---------- 成绩页 ---------- */
+window.mockShowAll = function () {
+  mock._showAll = !mock._showAll;
+  saveMockSession();
+  renderMockResult();
+};
+function renderMockResult() {
+  const app = document.getElementById('app');
+  const paper = mockPaper(mock.paperId);
+  const items = mockItems(paper);
+  const r = mock.result || mockGrade(paper, items);
+  const pct = Math.round(r.score / paper.totalScore * 100);
+  const secRows = paper.sections.map(s => {
+    let got = 0, cnt = 0, full = 0;
+    for (let i = s.from; i < Math.min(s.to, items.length); i++) { cnt++; full += s.score; const st = r.detail[i] || {}; if (st.state === 'right') got += s.score; else if (st.state === 'part') got += st.score || 0; }
+    return `<tr><td>${s.label}</td><td class="c">${cnt} 题</td><td class="c">${Math.round(got * 10) / 10} / ${full}</td></tr>`;
+  }).join('');
+  const showAll = !!mock._showAll;
+  const rows = items.map((it, i) => {
+    const st = r.detail[i] || {};
+    if (!showAll && st.state === 'right') return '';
+    const rec = mock.answers[it.q.id] || {};
+    const your = (rec.sel || []).map(k => it.q.options[k][0]).join('') || '未答';
+    const ans = normAnswer(it.q.answer).join('');
+    const badge = st.state === 'right' ? '<span class="pill g">正确</span>'
+      : st.state === 'part' ? `<span class="pill a">少选 ${st.score} 分</span>`
+      : st.state === 'blank' ? '<span class="pill">未答</span>' : '<span class="pill" style="background:#ffe3e3;color:#c92a2a">错误</span>';
+    return `<div class="mock-rev">
+      <div class="row"><b>${i + 1}.</b> ${badge}<span class="muted" style="font-size:12px">你：${esc(your)}　正确：${esc(ans)}</span></div>
+      <div class="stem" style="margin-top:4px">${renderStem(it.q.stem)}</div>
+      ${(it.q.options || []).map(o => `<div class="mock-ropt${normAnswer(it.q.answer).indexOf(o[0]) >= 0 ? ' ok' : ''}">${esc(o)}</div>`).join('')}
+      <div class="mock-exp">${esc(it.q.explanation || '')}</div>
+    </div>`;
+  }).join('');
+  app.innerHTML = `<div class="card">
+    <div class="row"><b>${esc(paper.title)} · 成绩</b><span class="pill ${r.score >= paper.totalScore * 0.6 ? 'g' : 'a'}">${pct}%</span></div>
+    <div class="mock-res">
+      <div><span class="muted">总分</span><b>${r.score}</b><span class="muted">/ ${paper.totalScore}</span></div>
+      <div><span class="muted">对</span><b>${r.right}</b></div>
+      <div><span class="muted">错</span><b>${r.wrong}</b></div>
+      <div><span class="muted">少选</span><b>${r.part}</b></div>
+      <div><span class="muted">未答</span><b>${r.blank}</b></div>
+      <div><span class="muted">用时</span><b>${mockFmt(mock.usedSec || 0)}</b></div>
+    </div>
+    <table class="mock-his" style="margin-top:12px"><thead><tr><th>题型</th><th>题量</th><th>得分</th></tr></thead><tbody>${secRows}</tbody></table>
+    <p class="muted" style="font-size:12px;margin-top:10px">错选与少选的题已自动加入错题库（未答不计入，可在下方回看）；模考记录不影响每日进度。</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn" onclick="mockStartFresh('${paper.id}')">再考一次</button>
+      <button class="btn ghost" onclick="mockBackList()">返回模考列表</button>
+      <button class="btn ghost" onclick="mockShowAll()">${showAll ? '只看错题' : '显示全部题目'}</button>
+      <a class="btn ghost" href="#/wrong">去错题库</a>
+    </div>
+  </div>
+  <div class="card"><b>逐题解析${showAll ? '（全部）' : '（仅错题/少选/未答）'}</b>${rows || '<p class="muted">全对，没有需要复盘的题目。</p>'}</div>`;
+}
+
 function router() {
   const raw = (location.hash || '#/today').replace('#/', '');
   const _parts = raw.split('?');
@@ -759,6 +1088,7 @@ function router() {
   const _q = {};
   if (_parts[1]) _parts[1].split('&').forEach(p => { const kv = p.split('='); if (kv[0]) _q[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || ''); });
   window._q = _q;
+  if (route !== 'mock') stopMockTick();
   document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === route));
   if (route === 'wrong') renderWrong();
   else if (route === 'notes') renderNotes();
@@ -766,6 +1096,7 @@ function router() {
   else if (route === 'progress') renderProgress();
   else if (route === 'settings') renderSettings();
   else if (route === 'drill') renderDrill();
+  else if (route === 'mock') renderMock();
   else renderToday();
 }
 window.addEventListener('hashchange', router);
@@ -780,7 +1111,7 @@ window.nav = nav;
 
 /* ---------------- 视图：今日任务 ---------------- */
 function renderToday() {
-  const drillEntry = '<div class="card review" style="display:flex;align-items:center;gap:10px"><a class="btn" href="#/drill">🎯 专项强化</a><span class="muted" style="font-size:12px">曲线图鉴（先学后练）· 工商计算专练</span></div>';
+  const drillEntry = '<div class="card review" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><a class="btn" href="#/drill">🎯 专项强化</a><a class="btn ghost" href="#/mock">🧪 真题模考</a><span class="muted" style="font-size:12px">曲线图鉴 · 计算专练 · 整卷模考</span></div>';
   validateSession(false);   // 进今日页先净化孤儿会话，避免「未完成答题」横幅误报
   const t = todaysChapters();
   let banner;
