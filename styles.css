@@ -111,3 +111,30 @@ select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8p
 .drill-points{margin:6px 0 12px;padding-left:18px;font-size:13.5px;line-height:1.65;}
 .drill-points li{margin:3px 0;}
 .drill-formula{background:var(--amber-l,#FFF4E0);border-radius:8px;padding:8px 12px;font-size:13.5px;line-height:1.9;margin:8px 0;}
+
+/* 真题模考（2026-10-21） */
+.mock-head{gap:10px;flex-wrap:wrap}
+.mock-clock{font-variant-numeric:tabular-nums;font-weight:700;color:var(--blue-d);font-size:15px}
+.mock-clock.warn{color:var(--red)}
+.mock-sec{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.mock-opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.mock-opt{border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;text-align:left;font-size:14px;line-height:1.65;cursor:pointer;color:var(--text);transition:.12s}
+.mock-opt:hover{border-color:var(--blue)}
+.mock-opt.on{border-color:var(--blue);background:var(--blue-l);box-shadow:inset 0 0 0 1px var(--blue)}
+.mock-card{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:6px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.mock-num{border:1px solid var(--line);border-radius:6px;text-align:center;padding:6px 0;font-size:12px;cursor:pointer;background:#fff}
+.mock-num.done{background:var(--blue-l);border-color:#a5d8ff}
+.mock-num.mark{box-shadow:inset 0 0 0 2px var(--amber)}
+.mock-num.cur{background:var(--blue-d);color:#fff;border-color:var(--blue-d)}
+.mock-paper{margin-bottom:12px}
+.mock-his{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.mock-his th,.mock-his td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.mock-his th{color:var(--muted);font-weight:600;background:#fafbfc}
+.mock-his td.c{text-align:center;white-space:nowrap}
+.mock-res{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}
+.mock-res>div{display:flex;flex-direction:column;align-items:center;min-width:56px}
+.mock-res b{font-size:24px;line-height:1.2}
+.mock-rev{border-top:1px solid var(--line);padding:12px 0}
+.mock-ropt{font-size:13.5px;padding:2px 0 2px 8px;color:var(--text)}
+.mock-ropt.ok{color:var(--green-d);font-weight:600}
+.mock-exp{margin-top:6px;font-size:13px;color:#555;background:#fafbfc;border-left:3px solid var(--line);padding:6px 10px;border-radius:0 6px 6px 0}
