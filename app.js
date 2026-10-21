@@ -113,11 +113,13 @@ function applyCorrections(q) {
   const nAns = normAnswer(c.answer);
   // 订正若携带畸形 options（同一次 AI 误判），answer 一并回退原题，避免只改答案不改选项导致错乱
   const trustAns = nAns.length && (c.options == null || okOpts);
+  // 权威锁定答案（源卷逐题核对过）：个人 AI 订正不得覆盖，避免旧误判影响模考判分
+  const lockedAnswer = !!(DATA.patches && DATA.patches[q.id] && DATA.patches[q.id].lock);
   return Object.assign({}, out, {
     stem: (typeof c.stem === 'string' && c.stem.trim()) ? c.stem : out.stem,
     type: c.type != null ? c.type : out.type,
     explanation: c.explanation != null ? c.explanation : out.explanation,
-    answer: trustAns ? nAns : out.answer,
+    answer: lockedAnswer ? out.answer : (trustAns ? nAns : out.answer),
     options: okOpts ? c.options : out.options,
     ai_explain: c.ai_explain, mnemonic: c.mnemonic, pitfall: c.pitfall,
     _corrected: !!c.corrected || !!out._patched
@@ -760,20 +762,61 @@ const MOCK_PAPERS = [
     id: 'e49', subject: 'economy', chapterId: 'e49',
     title: '2025 经济基础真题 · 11.2 下午场',
     minutes: 90, totalScore: 140,
-    sections: [
-      { label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 },
-      { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }
-    ]
+    sections: [{ label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 }, { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }]
   },
   {
     id: 'b22', subject: 'business', chapterId: 'b22',
     title: '2025 工商管理真题 · 11.2 下午场',
     minutes: 90, totalScore: 140,
-    sections: [
-      { label: '一、单选题', from: 0, to: 60, type: 'single', score: 1 },
-      { label: '二、多选题', from: 60, to: 80, type: 'multiple', score: 2 },
-      { label: '三、案例分析题（不定项）', from: 80, to: 100, type: 'case', score: 2 }
-    ]
+    sections: [{ label: '一、单选题', from: 0, to: 60, type: 'single', score: 1 }, { label: '二、多选题', from: 60, to: 80, type: 'multiple', score: 2 }, { label: '三、案例分析题（不定项）', from: 80, to: 100, type: 'case', score: 2 }]
+  },
+  {
+    id: 'e48', subject: 'economy', chapterId: 'e48',
+    title: '2025 经济基础真题 · 11.2 上午场',
+    minutes: 90, totalScore: 140,
+    sections: [{ label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 }, { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }]
+  },
+  {
+    id: 'b21', subject: 'business', chapterId: 'b21',
+    title: '2025 工商管理真题 · 11.2 上午场',
+    minutes: 90, totalScore: 140,
+    sections: [{ label: '一、单选题', from: 0, to: 60, type: 'single', score: 1 }, { label: '二、多选题', from: 60, to: 80, type: 'multiple', score: 2 }, { label: '三、案例分析题（不定项）', from: 80, to: 100, type: 'case', score: 2 }]
+  },
+  {
+    id: 'e47', subject: 'economy', chapterId: 'e47',
+    title: '2025 经济基础真题 · 11.1 下午场',
+    minutes: 90, totalScore: 140,
+    sections: [{ label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 }, { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }]
+  },
+  {
+    id: 'e46', subject: 'economy', chapterId: 'e46',
+    title: '2025 经济基础真题 · 11.1 上午场',
+    minutes: 90, totalScore: 140,
+    sections: [{ label: '一、单选题', from: 0, to: 70, type: 'single', score: 1 }, { label: '二、多选题', from: 70, to: 105, type: 'multiple', score: 2 }]
+  },
+  {
+    id: 'e38', subject: 'economy', chapterId: 'e38',
+    title: '2024 经济基础真题 · 演练卷（87 题）',
+    minutes: 90, totalScore: 117,
+    sections: [{ label: '一、客观题（单选＋多选）', from: 0, to: 87, type: 'auto', score: 1 }]
+  },
+  {
+    id: 'b13', subject: 'business', chapterId: 'b13',
+    title: '2024 工商管理真题 · 11.17 下午场',
+    minutes: 90, totalScore: 110,
+    sections: [{ label: '一、单选题', from: 0, to: 56, type: 'single', score: 1 }, { label: '二、多选题', from: 56, to: 73, type: 'multiple', score: 2 }, { label: '三、案例分析题（不定项）', from: 73, to: 83, type: 'case', score: 2 }]
+  },
+  {
+    id: 'b12', subject: 'business', chapterId: 'b12',
+    title: '2024 工商管理真题 · 11.17 上午场',
+    minutes: 90, totalScore: 95,
+    sections: [{ label: '一、单选题', from: 0, to: 57, type: 'single', score: 1 }, { label: '二、多选题', from: 57, to: 76, type: 'multiple', score: 2 }]
+  },
+  {
+    id: 'b16', subject: 'business', chapterId: 'b16',
+    title: '2024 工商管理真题 · 卷一（55 题）',
+    minutes: 90, totalScore: 84,
+    sections: [{ label: '一、客观题（单选＋多选）', from: 0, to: 35, type: 'auto', score: 1 }, { label: '二、案例分析题（不定项）', from: 35, to: 55, type: 'case', score: 2 }]
   }
 ];
 const MOCK_SESS_KEY = 'mock_session_v1';
@@ -978,17 +1021,19 @@ function mockGrade(paper, items) {
   const detail = [];
   items.forEach((it, i) => {
     const sec = mockSec(paper, i);
+    const secType = sec.type === 'auto' ? (it.q.type === 'multiple' ? 'multiple' : 'single') : sec.type;
+    const secScore = sec.type === 'auto' ? (secType === 'single' ? 1 : 2) : sec.score;
     const ans = normAnswer(it.q.answer);
     const sel = ((mock.answers[it.q.id] || {}).sel) || [];
     if (!sel.length) { blank++; detail.push({ state: 'blank' }); return; }
     const picked = sel.map(k => it.q.options[k][0]);
-    if (sec.type === 'single') {
-      if (picked.length === 1 && picked[0] === ans[0]) { score += sec.score; right++; detail.push({ state: 'right' }); }
+    if (secType === 'single') {
+      if (picked.length === 1 && picked[0] === ans[0]) { score += secScore; right++; detail.push({ state: 'right' }); }
       else { wrong++; detail.push({ state: 'wrong' }); }
     } else {
       const bad = picked.some(p => ans.indexOf(p) < 0);
       if (bad) { wrong++; detail.push({ state: 'wrong' }); }
-      else if (picked.length === ans.length) { score += sec.score; right++; detail.push({ state: 'right' }); }
+      else if (picked.length === ans.length) { score += secScore; right++; detail.push({ state: 'right' }); }
       else { const s = Math.round(0.5 * picked.length * 10) / 10; score += s; part++; detail.push({ state: 'part', score: s }); }
     }
   });
@@ -1039,7 +1084,13 @@ function renderMockResult() {
   const pct = Math.round(r.score / paper.totalScore * 100);
   const secRows = paper.sections.map(s => {
     let got = 0, cnt = 0, full = 0;
-    for (let i = s.from; i < Math.min(s.to, items.length); i++) { cnt++; full += s.score; const st = r.detail[i] || {}; if (st.state === 'right') got += s.score; else if (st.state === 'part') got += st.score || 0; }
+    for (let i = s.from; i < Math.min(s.to, items.length); i++) {
+      cnt++;
+      const sc = s.type === 'auto' ? (items[i].q.type === 'multiple' ? 2 : 1) : s.score;
+      full += sc;
+      const st = r.detail[i] || {};
+      if (st.state === 'right') got += sc; else if (st.state === 'part') got += st.score || 0;
+    }
     return `<tr><td>${s.label}</td><td class="c">${cnt} 题</td><td class="c">${Math.round(got * 10) / 10} / ${full}</td></tr>`;
   }).join('');
   const showAll = !!mock._showAll;
