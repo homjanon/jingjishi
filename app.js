@@ -38,12 +38,24 @@ async function saveSession() { await dbSet('session', state.session); }
 
 /* ---------------- 数据加载 ---------------- */
 /** 数据加载（C 方案：cors 代理主 → jsdelivr 兜底 → 同站兜底） */
+/* 资源版本号：取 app.js 的 ?v= 参数（deploy_site.py 每次部署都会刷新）。
+   2026-10-21 加：数据请求带上版本参数，避免 CF 代理 / jsDelivr / GitHub raw 的边缘缓存
+   继续返回旧版 questions.json、patches.json（此前表现为「代码已更新但题库还是旧的」）。 */
+function assetVer(){
+  try{
+    const el = document.querySelector('script[src*="app.js"]');
+    const m = el && el.src.match(/[?&]v=([\w.-]+)/);
+    return m ? m[1] : '';
+  }catch(e){ return ''; }
+}
 function dataSources(name){
-  const raw = 'https://raw.githubusercontent.com/homjanon/jingjishi/main/data/' + name;
+  const v = assetVer();
+  const q = v ? ('?v=' + v) : '';
+  const raw = 'https://raw.githubusercontent.com/homjanon/jingjishi/main/data/' + name + q;
   return [
-    'https://proxy.hellohopo.dpdns.org/?url=' + encodeURIComponent(raw),  // ① cors 代理主
-    'https://cdn.jsdelivr.net/gh/homjanon/jingjishi@main/data/' + name,   // ② jsdelivr 兜底
-    'data/' + name                                                         // ③ 同站兜底
+    'https://proxy.hellohopo.dpdns.org/?url=' + encodeURIComponent(raw),   // ① cors 代理主
+    'https://cdn.jsdelivr.net/gh/homjanon/jingjishi@main/data/' + name + q, // ② jsdelivr 兜底
+    'data/' + name + q                                                      // ③ 同站兜底
   ];
 }
 async function fetchJsonFallback(name){
