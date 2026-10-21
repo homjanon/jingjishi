@@ -138,3 +138,12 @@ select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8p
 .mock-ropt{font-size:13.5px;padding:2px 0 2px 8px;color:var(--text)}
 .mock-ropt.ok{color:var(--green-d);font-weight:600}
 .mock-exp{margin-top:6px;font-size:13px;color:#555;background:#fafbfc;border-left:3px solid var(--line);padding:6px 10px;border-radius:0 6px 6px 0}
+
+/* 移动端顶部导航（2026-10-21：7 项导航避免换行挤压） */
+@media (max-width: 640px){
+  .topbar{padding:10px 12px;gap:8px}
+  .brand{font-size:14px;flex:0 0 auto}
+  .nav{flex:1 1 auto;min-width:0;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{margin-left:10px;font-size:12.5px;display:inline-block}
+}
