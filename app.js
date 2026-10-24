@@ -862,6 +862,12 @@ function mockItems(paper) {
   if (!ch || !ch.questions) return [];
   return ch.questions.map(q => ({ q: applyCorrections(q), subject: paper.subject, chapterId: paper.chapterId, chapterTitle: ch.title }));
 }
+/* 某次记录要回看的题数 = 错选 + 少选 + 未答（优先按逐题明细统计，兼容旧记录缺 part 的情况） */
+function mockBadCount(h) {
+  if (!h) return 0;
+  if (h.rows && h.rows.length) return h.rows.filter(r => r[5] !== 'right').length;
+  return (h.wrong || 0) + (h.part || 0) + (h.blank || 0);
+}
 function mockHistory() { try { return JSON.parse(localStorage.getItem(MOCK_HIS_KEY) || '[]'); } catch (e) { return []; } }
 function mockSaveHistory(h) { localStorage.setItem(MOCK_HIS_KEY, JSON.stringify(h.slice(-50))); }
 function loadMockSession() { try { return JSON.parse(localStorage.getItem(MOCK_SESS_KEY) || 'null'); } catch (e) { return null; } }
@@ -924,14 +930,23 @@ function renderMock() {
   let saved = loadMockSession();
   // 卷面调整后，旧会话可能指向已下线的卷 → 清理，避免读取 null 报错
   if (saved && !mockPaper(saved.paperId)) { clearMockSession(); saved = null; }
-  if (saved && !saved.submitted) { renderMockExam(); return; }
-  if (saved && saved.submitted) { renderMockResult(); return; }
+  /* 历史场次回看（#/mock?h=<索引>）：优先于成绩页，
+     这样交卷后即使点了「返回模考列表」，仍能从列表再次打开那次的逐题明细 */
+  const hv = window._q && window._q.h;
+  if (hv !== undefined && hv !== '') { stopMockTick(); renderMockHis(parseInt(hv, 10)); return; }
+  /* ?list=1：从历史回看页返回时强制显示列表（否则会被未交卷的会话拉回考试页） */
+  const forceList = window._q && window._q.list;
+  if (!forceList) {
+    if (saved && !saved.submitted) { renderMockExam(); return; }
+    if (saved && saved.submitted) { renderMockResult(); return; }
+  }
   stopMockTick();
   const his = mockHistory();
   const cards = MOCK_PAPERS.map(p => {
     const runs = his.filter(h => h.paperId === p.id);
     const best = runs.length ? Math.max.apply(null, runs.map(h => h.score)) : null;
     const last = runs.length ? runs[runs.length - 1] : null;
+    const lastIdx = last ? his.indexOf(last) : -1;
     const n = mockItems(p).length;
     return `<div class="card mock-paper">
       <div class="row"><b>${esc(p.title)}</b><span class="pill g">${n} 题 · ${p.minutes} 分钟 · ${p.totalScore} 分</span></div>
@@ -940,13 +955,20 @@ function renderMock() {
         <button class="btn" onclick="mockStartFresh('${p.id}')">开始模考</button>
         ${runs.length
           ? `<span class="pill g">已完成 ${runs.length} 次</span>
-             <span class="muted" style="font-size:12.5px">最高得分 <b>${best}</b> 分 · 最近 ${last.score} 分（${last.date}）</span>`
+             <span class="muted" style="font-size:12.5px">最高得分 <b>${best}</b> 分 · 最近 ${last.score} 分（${last.date}）</span>
+             ${lastIdx >= 0 ? `<button class="btn ghost" onclick="mockViewHis(${lastIdx})">📋 上次错题回看（${mockBadCount(last)} 题）</button>` : ''}`
           : '<span class="muted" style="font-size:12px">尚未开始</span>'}
       </div>
     </div>`;
   }).join('');
-  const hisRows = his.slice().reverse().slice(0, 8).map((h, k) =>
-    `<tr><td>${h.date}</td><td>${esc(h.title)}</td><td class="c">${h.score}/${h.total}</td><td class="c">${mockFmt(h.usedSec)}</td><td class="c">${h.right}对 / ${h.wrong}错 / ${h.blank}未答</td><td class="c">${h.rows ? `<button class="btn ghost" style="padding:2px 8px;font-size:12px" onclick="mockExportHis(${his.length - 1 - k})">导出</button>` : '—'}</td></tr>`).join('');
+  const hisRows = his.slice().reverse().slice(0, 10).map((h, k) => {
+    const idx = his.length - 1 - k;
+    const badN = mockBadCount(h);
+    return `<tr><td>${h.date}</td><td>${esc(h.title)}</td><td class="c">${h.score}/${h.total}</td><td class="c">${mockFmt(h.usedSec)}</td><td class="c">${h.right}对 / ${h.wrong}错 / ${h.blank}未答</td><td class="c" style="white-space:nowrap">${h.rows
+      ? `<button class="btn ghost" style="padding:2px 8px;font-size:12px" onclick="mockViewHis(${idx})">回看（${badN}）</button>
+         <button class="btn ghost" style="padding:2px 8px;font-size:12px" onclick="mockExportHis(${idx})">导出</button>`
+      : '—'}</td></tr>`;
+  }).join('');
   app.innerHTML = `<div class="card"><div class="row"><b>🧪 真题模考</b><a class="btn ghost" href="#/today" style="padding:4px 12px">返回今日</a></div>
     <p class="muted" style="font-size:13px">按真实考试规则计时与评分：单选 1 分；多选/案例 2 分，错选不得分、少选每项 0.5 分。交卷后错题自动进入错题库；模考不占用每日计划进度。</p></div>
     ${cards}
@@ -1169,7 +1191,7 @@ window.mockSubmit = function (auto) {
   const h = mockHistory();
   h.push({
     paperId: paper.id, title: paper.title, date: localToday(), score: res.score, total: paper.totalScore,
-    usedSec: used, right: res.right, wrong: res.wrong, blank: res.blank,
+    usedSec: used, right: res.right, wrong: res.wrong, part: res.part, blank: res.blank,
     rows: mockRowsOf(paper, items, res)   // 逐题明细：题号/qid/题型/正确答案/你的答案/状态/得分
   });
   mockSaveHistory(h);
@@ -1281,6 +1303,88 @@ function renderMockResult() {
   </div>
   ${reviewCard}
   <div class="card"><b>逐题解析${showAll ? '（全部）' : '（仅错题/少选/未答）'}</b>${rows || '<p class="muted">全对，没有需要复盘的题目。</p>'}</div>`;
+}
+
+/* ---------- 历史场次逐题回看（交卷后返回列表仍可随时打开） ---------- */
+let mockHisAll = false;
+window.mockViewHis = function (idx) {
+  mockHisAll = false;
+  const want = '#/mock?h=' + idx;
+  if (location.hash === want) renderMock(); else location.hash = want;
+};
+window.mockHisToggleAll = function () { mockHisAll = !mockHisAll; renderMock(); };
+window.mockCopyHis = function (idx) {
+  const h = mockHistory()[idx];
+  if (!h || !h.rows) { toast('该次记录没有明细'); return; }
+  const txt = mockWrongText({ title: h.title + '（' + h.date + '）' }, h.rows);
+  const done = () => toast('错题清单已复制');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+  } else fallbackCopy(txt, done);
+};
+function renderMockHis(idx) {
+  const app = document.getElementById('app');
+  const his = mockHistory();
+  const h = his[idx];
+  if (!h) {
+    app.innerHTML = `<div class="card"><b>该次记录已不存在</b>
+      <p class="muted">历史记录最多保留最近 50 次，可能已被清理。</p>
+      <a class="btn" href="#/mock?list=1">← 返回模考列表</a></div>`;
+    return;
+  }
+  const rows = h.rows || [];
+  const ix = bankIdx();
+  const part = h.part == null ? rows.filter(r => r[5] === 'part').length : h.part;
+  const bad = rows.filter(r => r[5] !== 'right');
+  const list = mockHisAll ? rows : bad;
+  const tag = r => r[5] === 'part' ? `<span class="pill a">少选 ${r[6]} 分</span>`
+    : r[5] === 'blank' ? '<span class="pill">未答 0 分</span>'
+    : r[5] === 'right' ? `<span class="pill g">正确 ${r[6]} 分</span>`
+    : '<span class="pill" style="background:#ffe3e3;color:#c92a2a">错选 0 分</span>';
+  const body = list.map(r => {
+    const rec = ix[r[1]];
+    const q = rec ? rec.q : null;
+    const ans = normAnswer(r[3]);
+    const stem = q ? renderStem(q.stem) : '<span class="muted">（该题已不在题库中）</span>';
+    const opts = q ? (q.options || []).map(o =>
+      `<div class="mock-ropt${ans.indexOf(o[0]) >= 0 ? ' ok' : ''}">${esc(o)}</div>`).join('') : '';
+    const exp = q ? esc(q.explanation || '（暂无解析）') : '';
+    const mat = q && !/^案例\s*[（(]/.test((q.stem || '').trim())
+      ? caseMaterialInline(rec.subject, rec.chapterId, q.id) : '';
+    return `<div class="mock-rev">
+      <div class="row"><b>${r[0]}.</b> ${tag(r)}<span class="muted" style="font-size:12px">${r[1]} · 你：${esc(r[4] || '—')}　正确：${esc(r[3])}</span></div>
+      ${mat}
+      <div class="stem" style="margin-top:4px">${stem}</div>
+      ${opts}
+      <div class="mock-exp">${exp}</div>
+    </div>`;
+  }).join('');
+  const pct = Math.round(h.score / h.total * 100);
+  app.innerHTML = `<div class="card">
+    <div class="row"><b>${esc(h.title)}</b><span class="pill ${h.score >= h.total * 0.6 ? 'g' : 'a'}">${pct}%</span></div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">${h.date} 那场 · 历史记录回看</p>
+    <div class="mock-res">
+      <div><span class="muted">得分</span><b>${h.score}</b><span class="muted">/ ${h.total}</span></div>
+      <div><span class="muted">对</span><b>${h.right}</b></div>
+      <div><span class="muted">错</span><b>${h.wrong}</b></div>
+      <div><span class="muted">少选</span><b>${part}</b></div>
+      <div><span class="muted">未答</span><b>${h.blank || 0}</b></div>
+      <div><span class="muted">用时</span><b>${mockFmt(h.usedSec || 0)}</b></div>
+    </div>
+    <p class="muted" style="font-size:12px;margin-top:10px">答案与解析按<b>当前题库</b>显示（若期间有订正，可能与你当时看到的不同）。需要复核时把清单复制给我即可。</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <a class="btn ghost" href="#/mock?list=1">← 返回模考列表</a>
+      <button class="btn ghost" onclick="mockHisToggleAll()">${mockHisAll ? '只看错题' : '显示全部题目'}</button>
+      ${rows.length ? `<button class="btn" onclick="mockCopyHis(${idx})">📋 复制错题清单</button>
+        <button class="btn ghost" onclick="mockExportHis(${idx})">⬇ 导出该次明细</button>` : ''}
+    </div>
+  </div>
+  <div class="card"><div class="row"><b>${mockHisAll ? '逐题解析（全部）' : '错题回顾'}</b>
+      <span class="pill ${bad.length ? 'a' : 'g'}">${bad.length} 题</span></div>
+    ${rows.length
+      ? (body || '<p class="muted">该次没有错题。</p>')
+      : '<p class="muted">这次记录没有保存逐题明细（可能是较早版本导出的记录）。</p>'}
+  </div>`;
 }
 
 function router() {
