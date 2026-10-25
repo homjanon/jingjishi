@@ -339,6 +339,17 @@ function gradeWrong(w, correct) {
   saveWrong();
 }
 function removeWrong(qid) { state.wrong = state.wrong.filter(w => w.qid !== qid); saveWrong(); }
+/* 2026 考纲已整章删除的题（如工商「电子商务」）：题库里打 retired 标记，
+   错题库显示灰标并支持一键清除，避免把时间浪费在不考的内容上。 */
+function retiredQids() {
+  const s = new Set();
+  for (const sub of ['economy', 'business']) {
+    const d = DATA.questions && DATA.questions[sub];
+    if (!d || !d.chapters) continue;
+    for (const c of d.chapters) for (const q of (c.questions || [])) if (q.retired) s.add(q.id);
+  }
+  return s;
+}
 /* 错题库显示的权威答案/解析：patches（含 lock）→ 个人 AI 订正 → 记录快照。
    与判分链路 applyCorrections 保持一致，避免「错题库显示的答案 ≠ 模考判分依据」。 */
 function wrongAnswerView(w) {
@@ -427,6 +438,16 @@ window.rmWrongByList = function () {
   state.wrong = state.wrong.filter(w => !set.has(w.qid));
   saveWrong(); renderWrong();
   toast('已按清单删除 ' + found.length + ' 道错题');
+};
+/* 一键清除「2026 考纲已删除章节」的错题（如电子商务整章） */
+window.rmRetiredWrong = function () {
+  const set = retiredQids();
+  const hit = state.wrong.filter(w => set.has(w.qid));
+  if (!hit.length) { toast('没有已删章节的错题'); return; }
+  if (!confirm('将从错题库删除 ' + hit.length + ' 道「2026 考纲已删除章节」的题（如电子商务），不影响错题以外的数据。确定？')) return;
+  state.wrong = state.wrong.filter(w => !set.has(w.qid));
+  saveWrong(); renderWrong();
+  toast('已清除 ' + hit.length + ' 道已删章节错题');
 };
 function markStudy(chapterKey) {
   const today = localToday();
@@ -1834,6 +1855,8 @@ function renderWrong() {
   const unCount = state.wrong.filter(isUnanswerable).length;
   const cntStub = state.wrong.filter(w => (w.count || 1) >= 3).length;
   const cntHard = state.wrong.filter(w => (w.count || 1) >= 3 && (w.box || 0) === 0).length;
+  const retSet = retiredQids();
+  const retCnt = state.wrong.filter(w => retSet.has(w.qid)).length;
   const sortMode = state.settings.wrongSort || 'rand';
   const subFilter = state.settings.wrongSub || 'all';   // all / economy / business（临时筛选）
   const cntE = state.wrong.filter(w => subOf(w) === 'economy').length;
@@ -1861,6 +1884,7 @@ function renderWrong() {
       <button class="btn ghost" onclick="startStubborn(3)" title="累计做错≥3次的题，按错误次数从高到低">🔁 顽固错题（${cntStub}）</button>
       <button class="btn ghost" onclick="startStubborn(3, true)" title="错≥3次且至今一次没做对过">💀 从未做对（${cntHard}）</button>
       <button class="btn ghost" onclick="rmWrongByList()">🧹 按清单清理</button>
+      ${retCnt ? `<button class="btn ghost" onclick="rmRetiredWrong()" title="2026 考纲整章删除的题（如电子商务），一键从错题库剔除">🧹 清除已删章节（${retCnt}）</button>` : ''}
     </div></div>`;
   let list = state.wrong.slice();
   if (subFilter !== 'all') list = list.filter(w => subOf(w) === subFilter);
@@ -1884,7 +1908,7 @@ function renderWrong() {
     const subPill = subjectPill(subOf(w));
     return `
     <div class="q">
-      <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${subPill}${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}</div>
+      <div class="meta"><label class="wselbox"><input type="checkbox" class="wsel" data-qid="${w.qid}" onchange="updateSelCount()"></label>${subPill}${esc(w.chapterTitle || '')}　|　答错 ${w.count || 1} 次　|　${status}　|　你的答案：${w.yourWrong || '—'}${unBadge}${retSet.has(w.qid) ? ' <span class="pill" style="background:#eceff3;color:#5b6472">2026 已删·可跳过</span>' : ''}</div>
       ${caseMaterialHtml(w.subject, w.chapterId, w.qid)}
       <div class="stem">${renderStem(w.stem)}</div>
       <div class="explain show"><b>正确答案：</b>${esc(dispAnswer)} ${corrBadge}</div>
