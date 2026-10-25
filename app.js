@@ -339,6 +339,21 @@ function gradeWrong(w, correct) {
   saveWrong();
 }
 function removeWrong(qid) { state.wrong = state.wrong.filter(w => w.qid !== qid); saveWrong(); }
+/* 错题库显示的权威答案/解析：patches（含 lock）→ 个人 AI 订正 → 记录快照。
+   与判分链路 applyCorrections 保持一致，避免「错题库显示的答案 ≠ 模考判分依据」。 */
+function wrongAnswerView(w) {
+  const base = { id: w.qid, stem: w.stem, options: w.options, type: w.type, answer: w.answer, explanation: w.explanation };
+  let q = base;
+  try { q = applyCorrections(base) || base; } catch (e) { q = base; }
+  return {
+    answer: Array.isArray(q.answer) ? q.answer.join('') : (q.answer || ''),
+    explanation: q.explanation,
+    options: (Array.isArray(q.options) && q.options.length >= 2) ? q.options : (w.options || []),
+    type: q.type || w.type,
+    stem: q.stem || w.stem,
+    corrected: !!(q._corrected || q._patched)
+  };
+}
 /* 科目名映射：economy=经济基础（蓝 pill）/ business=工商管理（绿 pill.g）/ 未知=灰 */
 function subjectName(subject) { return subject === 'economy' ? '经济基础' : subject === 'business' ? '工商管理' : '未知科目'; }
 function subjectPill(subject) { return subject === 'economy' ? '<span class="pill">经济基础</span>' : subject === 'business' ? '<span class="pill g">工商管理</span>' : '<span class="pill">未知</span>'; }
@@ -429,17 +444,23 @@ function markStudy(chapterKey) {
 function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
 function b64decode(str) { return decodeURIComponent(escape(atob(str))); }
 function syncPayload() {
-  return { wrong: state.wrong, progress: state.progress, corrections: state.corrections, updatedAt: new Date().toISOString() };
+  /* 2026-10-25：模考记录（mockHistory）一并上云，否则「单位做模考 → 回家拉取」看不到成绩与逐题明细。
+     不同步 mockSession：进行中的答题纸属于单机状态，跨设备续答会造成计时/答案错乱。 */
+  return { wrong: state.wrong, progress: state.progress, corrections: state.corrections, mockHistory: mockHistory(), updatedAt: new Date().toISOString() };
 }
 /* 拉取成功后统一的合并落盘（两个平台共用） */
 async function applyCloudPayload(payload, who) {
+  const mhBefore = mockHistory().length;
   state.wrong = mergeWrong(payload.wrong, state.wrong);
   state.progress = mergeProgress(payload.progress, state.progress);
   state.corrections = mergeCorrections(payload.corrections, state.corrections);
+  const mh = mergeMockHistory(payload.mockHistory, mockHistory());
+  mockSaveHistory(mh);
   await saveWrong(); await saveProgress(); await saveCorrections();
   validateSession(true);   // 另一台设备已有新进度，本机残留会话作废
   state.settings.lastSync = new Date().toISOString(); await saveSettings();
-  toast(`已从 ${who} 拉取并合并 ✅（不会覆盖本机新数据）`); router();
+  const mhAdd = mh.length - mhBefore;
+  toast(`已从 ${who} 拉取并合并 ✅（不会覆盖本机新数据${mhAdd > 0 ? `，新增模考记录 ${mhAdd} 场` : ''}）`); router();
 }
 
 /* ---------------- GitHub 写：Git Data API 六步（2026-08-03 重构，一劳永逸）
@@ -611,6 +632,8 @@ window.mergeGiteeFiles = async function (mode) {
   toast(`正在合并 ${pick.length} 份快照…`);
   pick.sort((a, b) => a.name.localeCompare(b.name));   // 旧→新逐个合并，幂等
   let merged = 0;
+  const mhBefore = mockHistory().length;
+  let mhAll = mockHistory();
   for (const f of pick) {
     const fileResp = await giteeReq(giteeFileUrl(c, f.name), c, 'GET');
     if (!fileResp.ok) continue;
@@ -621,13 +644,16 @@ window.mergeGiteeFiles = async function (mode) {
     state.wrong = mergeWrong(payload.wrong, state.wrong);
     state.progress = mergeProgress(payload.progress, state.progress);
     state.corrections = mergeCorrections(payload.corrections, state.corrections);
+    mhAll = mergeMockHistory(payload.mockHistory, mhAll);   // 模考记录逐份并集
     merged++;
   }
   if (!merged) { toast('Gitee 拉取失败：没有可读取的数据文件'); return; }
+  mockSaveHistory(mhAll);
   await saveWrong(); await saveProgress(); await saveCorrections();
   validateSession(true);   // 另一台设备已有新进度，本机残留会话作废
   state.settings.lastSync = new Date().toISOString(); await saveSettings();
-  toast(`已从 Gitee 合并 ${merged} 份快照 ✅（不会覆盖本机新数据）`); router();
+  const mhAdd = mhAll.length - mhBefore;
+  toast(`已从 Gitee 合并 ${merged} 份快照 ✅（不会覆盖本机新数据${mhAdd > 0 ? `，新增模考记录 ${mhAdd} 场` : ''}）`); router();
 };
 
 /* 平台路由：设置里的「同步方式」决定走哪条通道 */
@@ -868,8 +894,41 @@ function mockBadCount(h) {
   if (h.rows && h.rows.length) return h.rows.filter(r => r[5] !== 'right').length;
   return (h.wrong || 0) + (h.part || 0) + (h.blank || 0);
 }
+/* ---------- 模考记录跨设备同步（2026-10-25 新增） ----------
+   指纹 = 试卷ID|日期|用时|明细行数：跨设备拉取时同一场只保留一份，重复上传也不会膨胀。
+   排序按时间升序（无 ts 的旧记录用日期兜底），并从最新往旧累计体积，超过预算就裁掉更早的场次。 */
+function mockHisKey(h) {
+  if (!h) return '';
+  return [h.paperId || '', h.date || '', h.usedSec || 0, (h.rows && h.rows.length) || 0].join('|');
+}
+function mockHisTs(h) {
+  if (h && h.ts) return h.ts;
+  const d = h && h.date ? new Date(h.date + 'T00:00:00').getTime() : 0;
+  return isNaN(d) ? 0 : d;
+}
+function trimMockHistory(list) {
+  const arr = (list || []).filter(Boolean).sort((a, b) => mockHisTs(a) - mockHisTs(b));
+  const kept = [];
+  let bytes = 0;
+  for (let i = arr.length - 1; i >= 0; i--) {          // 从最新一场往前装
+    const s = JSON.stringify(arr[i]).length;
+    if (kept.length >= 10 && bytes + s > 260000) break; // 至少保留 10 场，其余按体积让位
+    kept.unshift(arr[i]); bytes += s;
+    if (kept.length >= 50) break;                       // 上限 50 场
+  }
+  return kept;
+}
+function mergeMockHistory(inc, cur) {
+  const map = new Map();
+  for (const h of (cur || [])) if (h && h.paperId) map.set(mockHisKey(h), h);
+  for (const h of (inc || [])) if (h && h.paperId) {
+    const k = mockHisKey(h);
+    if (!map.has(k)) map.set(k, h);     // 指纹相同视为同一场，保留本机副本
+  }
+  return trimMockHistory(Array.from(map.values()));
+}
 function mockHistory() { try { return JSON.parse(localStorage.getItem(MOCK_HIS_KEY) || '[]'); } catch (e) { return []; } }
-function mockSaveHistory(h) { localStorage.setItem(MOCK_HIS_KEY, JSON.stringify(h.slice(-50))); }
+function mockSaveHistory(h) { localStorage.setItem(MOCK_HIS_KEY, JSON.stringify(trimMockHistory(h))); }
 function loadMockSession() { try { return JSON.parse(localStorage.getItem(MOCK_SESS_KEY) || 'null'); } catch (e) { return null; } }
 function saveMockSession() { if (mock) localStorage.setItem(MOCK_SESS_KEY, JSON.stringify(mock)); }
 function clearMockSession() { mock = null; localStorage.removeItem(MOCK_SESS_KEY); stopMockTick(); }
@@ -1192,9 +1251,11 @@ window.mockSubmit = function (auto) {
   h.push({
     paperId: paper.id, title: paper.title, date: localToday(), score: res.score, total: paper.totalScore,
     usedSec: used, right: res.right, wrong: res.wrong, part: res.part, blank: res.blank,
+    ts: Date.now(),                        // 跨设备合并时用于稳定排序
     rows: mockRowsOf(paper, items, res)   // 逐题明细：题号/qid/题型/正确答案/你的答案/状态/得分
   });
   mockSaveHistory(h);
+  scheduleSync();   // 2026-10-25：交卷后自动把模考记录带上云端（auto 开启时才生效）
   // 错题入库（错选 / 少选 / 未答）
   items.forEach((it, i) => {
     const st = res.detail[i].state;
@@ -1804,14 +1865,14 @@ function renderWrong() {
     list.reverse();
   }
   const items = list.map(w => {
-    const corr = state.corrections[w.qid];
+    const v = wrongAnswerView(w);
     const canRedo = Array.isArray(w.options) && w.options.length >= 2;
     const due = isDue(w);
     const matured = (w.box || 0) >= EB_MAX;
     const status = matured ? `已巩固 · 下次 ${w.due || '—'}` : (due ? '⏰ 今日待复习' : `排到 ${w.due || '—'}`);
-    const dispAnswer = (corr && corr.answer) ? corr.answer : w.answer;
-    const dispExpl = (corr && corr.explanation) ? corr.explanation : w.explanation;
-    const corrBadge = (corr && corr.corrected) ? ` <span class="pill a">AI已修正</span>` : '';
+    const dispAnswer = v.answer;
+    const dispExpl = v.explanation;
+    const corrBadge = v.corrected ? ` <span class="pill a">AI已修正</span>` : '';
     const unBadge = isUnanswerable(w) ? ` <span class="pill bad">⚠️ 无材料·无法作答</span>` : '';
     const subPill = subjectPill(subOf(w));
     return `
@@ -1860,10 +1921,10 @@ window.delWrongSingle = function (qid) {
 function redoWrong(qid) {
   const w = state.wrong.find(x => x.qid === qid);
   if (!w) { renderWrong(); return; }
-  const corr = state.corrections[w.qid];
-  const opts = (corr && corr.options) ? corr.options : (w.options || []);
-  const ans = (corr && corr.answer) ? corr.answer : (w.answer || '');
-  const q = shuffleOpts({ id: qid, type: w.type || 'single', stem: w.stem, options: opts, answer: ans.split('、').filter(Boolean), explanation: w.explanation || '' });
+  const v = wrongAnswerView(w);
+  const opts = v.options;
+  const ans = v.answer || '';
+  const q = shuffleOpts({ id: qid, type: v.type || 'single', stem: v.stem, options: opts, answer: normAnswer(ans), explanation: v.explanation || '' });
   app.innerHTML = `<div class="card"><div class="row"><span class="muted">重做 · ${esc(w.chapterTitle || '')}</span><span class="muted">${subjectPill(subOf(w))} ❓ ${state.wrong.indexOf(w) + 1}/${state.wrong.length}</span></div>
     <div class="q">${caseMaterialInline(w.subject, w.chapterId, w.qid)}<div class="qtype">${typeBadge(q.type)}</div><div class="stem">${renderStem(q.stem)}</div>
     ${optHtml(q.options, q.type)}
@@ -2271,9 +2332,13 @@ window.importBackup = function (input) {
     state.wrong = mergeWrong(p.wrong, state.wrong);
     state.progress = mergeProgress(p.progress, state.progress);
     state.corrections = mergeCorrections(p.corrections, state.corrections);
+    const mhBefore = mockHistory().length;
+    const mh = mergeMockHistory(p.mockHistory, mockHistory());
+    mockSaveHistory(mh);
     saveWrong(); saveProgress(); saveCorrections();
     validateSession(true);   // 导入后清掉本机残留会话（数据已来自另一台设备）
-    toast(`已合并导入 ✅（错题 ${nW} 道 / 进度 ${nP} 条 / 订正 ${nC} 条，已与本机数据合并）`);
+    const mhAdd = mh.length - mhBefore;
+    toast(`已合并导入 ✅（错题 ${nW} 道 / 进度 ${nP} 条 / 订正 ${nC} 条${mhAdd > 0 ? ` / 模考记录 +${mhAdd} 场` : ''}，已与本机数据合并）`);
     router();
   } catch (e) { toast('导入失败：' + e.message); } };
   r.readAsText(f);
