@@ -1510,7 +1510,13 @@ window.nav = nav;
 
 /* ---------------- 视图：今日任务 ---------------- */
 function renderToday() {
-  const drillEntry = '<div class="card review" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><a class="btn" href="#/drill">🎯 专项强化</a><a class="btn ghost" href="#/mock">🧪 真题模考</a><span class="muted" style="font-size:12px">曲线图鉴 · 计算专练 · 整卷模考</span></div>';
+  /* 入口条：专项强化 · 真题模考 · 2026 新增考点（b23，2026-10-25 重建后重新放回入口） */
+  const b23ch = findChapter('business', 'b23');
+  const b23n = (b23ch && b23ch.questions) ? b23ch.questions.length : 0;
+  const b23Btn = b23n
+    ? `<button class="btn ghost" onclick="startQuiz('business','b23')" title="第6章质量管理与安全生产 + ESG/数字化战略 + 创新新模式 + 治理重写">🆕 新增考点（${b23n}）</button>`
+    : '';
+  const drillEntry = `<div class="card review" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><a class="btn" href="#/drill">🎯 专项强化</a><a class="btn ghost" href="#/mock">🧪 真题模考</a>${b23Btn}<span class="muted" style="font-size:12px">曲线图鉴 · 计算专练 · 整卷模考 · 2026 新增考点</span></div>`;
   validateSession(false);   // 进今日页先净化孤儿会话，避免「未完成答题」横幅误报
   const t = todaysChapters();
   let banner;
