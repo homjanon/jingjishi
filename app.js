@@ -996,8 +996,15 @@ function renderMock() {
   /* ?list=1：从历史回看页返回时强制显示列表（否则会被未交卷的会话拉回考试页） */
   const forceList = window._q && window._q.list;
   if (!forceList) {
-    if (saved && !saved.submitted) { renderMockExam(); return; }
-    if (saved && saved.submitted) { renderMockResult(); return; }
+    /* 关键：全局 mock 必须与本地会话同步。
+       2026-10-25 修：重开站点后 mock 为 null，直接调 renderMockExam/Result 会抛
+       "Cannot read properties of null (reading 'paperId')"，表现就是点「模考」没反应。 */
+    if (saved && !saved.submitted) { mock = saved; renderMockExam(); return; }
+    /* 已交卷的会话只在「本次打开站点、刚交完卷」时占据入口（保留交卷后回看成绩的习惯）；
+       刷新/重新进入站点后回到列表，成绩与逐题明细从历史「回看」进，避免老成绩页顶住入口。 */
+    if (saved && saved.submitted && mock && mock.submitted && mock.paperId === saved.paperId) {
+      mock = saved; renderMockResult(); return;
+    }
   }
   stopMockTick();
   const his = mockHistory();
