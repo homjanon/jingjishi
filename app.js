@@ -51,11 +51,16 @@ function assetVer(){
 function dataSources(name){
   const v = assetVer();
   const q = v ? ('?v=' + v) : '';
-  const raw = 'https://raw.githubusercontent.com/homjanon/jingjishi/main/data/' + name + q;
+  const iso = name.split('?')[0];   // 防重复参数：调用方若已带 ?v= 也能正确取文件名
+  const raw = 'https://raw.githubusercontent.com/homjanon/jingjishi/main/data/' + iso + q;
+  /* 2026-10-25 调整顺序：同站第一。
+     GitHub raw 的 CDN 会缓存 up to 几分钟，代理拿到的仍是旧文件（实测部署 2 分钟后
+     proxy 返回 1582787 字节旧版、同站已是新版 1579247）。同站是 Pages 构建产物，
+     构建完成即最新，且同域无 CORS 问题，故设为首选；代理/jsDelivr 仅作兜底。 */
   return [
-    'https://proxy.hellohopo.dpdns.org/?url=' + encodeURIComponent(raw),   // ① cors 代理主
-    'https://cdn.jsdelivr.net/gh/homjanon/jingjishi@main/data/' + name + q, // ② jsdelivr 兜底
-    'data/' + name + q                                                      // ③ 同站兜底
+    'data/' + iso + q,                                                      // ① 同站（构建完成即最新）
+    'https://proxy.hellohopo.dpdns.org/?url=' + encodeURIComponent(raw),   // ② cors 代理兜底
+    'https://cdn.jsdelivr.net/gh/homjanon/jingjishi@main/data/' + iso + q   // ③ jsdelivr 兜底
   ];
 }
 async function fetchJsonFallback(name){
@@ -71,13 +76,12 @@ async function fetchJsonFallback(name){
 }
 async function loadData() {
   // 版本号破坏缓存：data/*.json 带 ?v，确保部署后浏览器拉到最新 app.js/plan.json/questions.json
-  const v = (document.querySelector('meta[name="app-version"]') || {}).content || '';
-  const qs = v ? ('?v=' + v) : '';
+  /* 版本参数统一由 dataSources() 追加，这里传纯文件名，避免出现 ?v=x?v=x 的双参数 */
   const [q, p, n, pat] = await Promise.all([
-    fetchJsonFallback('questions.json' + qs),
-    fetchJsonFallback('plan.json' + qs),
-    fetchJsonFallback('notes.json' + qs),
-    fetchJsonFallback('patches.json' + qs).catch(() => ({}))
+    fetchJsonFallback('questions.json'),
+    fetchJsonFallback('plan.json'),
+    fetchJsonFallback('notes.json'),
+    fetchJsonFallback('patches.json').catch(() => ({}))
   ]);
   DATA.questions = q; DATA.plan = p; DATA.notes = n; DATA.patches = pat || {};
 }
